@@ -12,7 +12,7 @@
     "dev": "node --env-file-if-exists=.env --watch server/index.js",
     "sync": "node scripts/sync-cards.js",
     "import": "node --env-file-if-exists=.env scripts/import-collection.js",
-    "check": "node scripts/check.js",
+    "check": "node scripts/check.js && node scripts/check-save.js",
     "build": "node scripts/build-static.js",
     "fingerprints": "node scripts/fingerprints.js"
   },

@@ -39,6 +39,7 @@ const S = {
   set: null, q: "", own: "all", rar: new Set(),
   owned: {},          // { cardId: { EN: { n, f, p } } }
   saving: {},         // cardId -> "pending" | "err"
+  saveError: {},      // cardId -> motivo del último error al guardar
   admin: false,       // sesión iniciada (contraseña o token de GitHub)
   editing: false,     // modo edición activado
   adminEnabled: false,
@@ -127,18 +128,29 @@ async function getJson(path) {
 }
 
 async function gh(path, opts = {}) {
-  const res = await fetch(`https://api.github.com${path}`, {
-    ...opts,
-    cache: "no-store",
-    headers: {
-      Accept: "application/vnd.github+json",
-      Authorization: `Bearer ${token.get()}`,
-      "X-GitHub-Api-Version": "2022-11-28",
-      ...(opts.body ? { "Content-Type": "application/json" } : {}),
-    },
-  });
+  let res;
+  try {
+    res = await fetch(`https://api.github.com${path}`, {
+      ...opts,
+      cache: "no-store",
+      headers: {
+        Accept: "application/vnd.github+json",
+        Authorization: `Bearer ${token.get()}`,
+        "X-GitHub-Api-Version": "2022-11-28",
+        ...(opts.body ? { "Content-Type": "application/json" } : {}),
+      },
+    });
+  } catch {
+    // Sin conexión, o el móvil cortó la petición (pantalla bloqueada…).
+    throw Object.assign(new Error("sin conexión con GitHub"), { status: 0 });
+  }
   const body = await res.json().catch(() => ({}));
-  if (!res.ok) throw Object.assign(new Error(body.message || `GitHub respondió ${res.status}`), { status: res.status });
+  if (!res.ok) {
+    // Límite de peticiones de GitHub: dice cuánto esperar (Retry-After o la hora de reinicio).
+    const hdr = (k) => res.headers?.get?.(k) ?? null;
+    const after = Number(hdr("retry-after")) || (hdr("x-ratelimit-remaining") === "0" ? Math.max(1, Number(hdr("x-ratelimit-reset")) - Date.now() / 1000) : 0);
+    throw Object.assign(new Error(body.message || `GitHub respondió ${res.status}`), { status: res.status, retryAfterMs: after ? after * 1000 : 0 });
+  }
   return body;
 }
 const b64decode = (s) => new TextDecoder().decode(Uint8Array.from(atob(s.replace(/\s/g, "")), (c) => c.charCodeAt(0)));
@@ -156,8 +168,13 @@ function collectionFile(col) {
   }
   return `{\n${rows.join(",\n")}\n}\n`;
 }
-async function ghReadCollection() {
-  const f = await gh(`/repos/${STATIC.repo}/contents/${COL_PATH}?ref=${encodeURIComponent(STATIC.branch)}`);
+// La API de GitHub puede devolver unos segundos la versión anterior del archivo justo después de
+// escribirlo (lo cachea hasta 60 s). Por eso se recuerda la última versión escrita (`ghKnown`) y se
+// guarda sobre ella; solo se vuelve a leer si hay conflicto, y entonces con un parámetro único.
+let ghKnown = null; // { sha, data }
+async function ghReadCollection(fresh = false) {
+  const bust = fresh ? `&_=${Date.now()}` : "";
+  const f = await gh(`/repos/${STATIC.repo}/contents/${COL_PATH}?ref=${encodeURIComponent(STATIC.branch)}${bust}`);
   return { sha: f.sha, data: JSON.parse(b64decode(f.content)) };
 }
 
@@ -202,18 +219,25 @@ async function ghFlush() {
   ghQueue.running = true;
   try {
     for (let attempt = 0; ; attempt++) {
-      const { sha, data } = await ghReadCollection();
-      const message = commitMessage(data, batch);
-      Object.assign(data, batch);
       try {
-        await gh(`/repos/${STATIC.repo}/contents/${COL_PATH}`, {
+        // Primer intento: sobre la última versión que escribimos nosotros (si la hay).
+        const base = attempt === 0 && ghKnown ? ghKnown : await ghReadCollection(attempt > 0);
+        const data = structuredClone(base.data);
+        const message = commitMessage(data, batch);
+        Object.assign(data, batch);
+        const content = collectionFile(data);
+        const res = await gh(`/repos/${STATIC.repo}/contents/${COL_PATH}`, {
           method: "PUT",
-          body: JSON.stringify({ message, content: b64encode(collectionFile(data)), sha, branch: STATIC.branch }),
+          body: JSON.stringify({ message, content: b64encode(content), sha: base.sha, branch: STATIC.branch }),
         });
+        ghKnown = res?.content?.sha ? { sha: res.content.sha, data: JSON.parse(content) } : null;
         break;
       } catch (err) {
-        // 409/422: el archivo cambió entre medias (otro commit). Se vuelve a leer y se reintenta.
-        if ((err.status === 409 || err.status === 422) && attempt < 2) { await new Promise((r) => setTimeout(r, 1000 * (attempt + 1))); continue; }
+        ghKnown = null;
+        // Se reintenta si el archivo cambió entre medias (409/422), si GitHub falla o limita (5xx, 403/429
+        // con espera) o si se cortó la conexión. Esperas crecientes: 1, 2, 4, 8 s.
+        const retry = [409, 422, 429, 0].includes(err.status) || err.status >= 500 || (err.status === 403 && err.retryAfterMs);
+        if (retry && attempt < 4) { await new Promise((r) => setTimeout(r, Math.min(60000, err.retryAfterMs || 1000 * 2 ** attempt))); continue; }
         throw err;
       }
     }
@@ -532,7 +556,8 @@ function stepper(lang, k, v) {
 }
 
 function saveMsg(id) {
-  return S.saving[id] === "err" ? "No se ha podido guardar. Vuelve a intentarlo." : S.saving[id] ? "Guardando…" : "";
+  if (S.saving[id] === "err") return `No se ha podido guardar${S.saveError[id] ? ` (${S.saveError[id]})` : ""}. Se reintentará solo; no cierres la página.`;
+  return S.saving[id] ? "Guardando…" : "";
 }
 
 function renderSheet(first = false) {
@@ -669,7 +694,7 @@ function logout() {
 }
 
 /* ---------- edición ---------- */
-const timers = {}, versions = {}, inFlight = {};
+const timers = {}, versions = {}, inFlight = {}, retries = {};
 
 function change(id, mutate) {
   const e = structuredClone(S.owned[id] || {});
@@ -690,10 +715,21 @@ async function save(id) {
     await backend.saveCard(id, S.owned[id] || {});
     if (versions[id] === v0) delete S.saving[id];
     if (STATIC && !S.toldDeploy) { S.toldDeploy = true; toast("Guardado en GitHub. Los demás lo verán en 1–2 minutos."); }
+    retries[id] = 0;
+    delete S.saveError[id];
   } catch (err) {
+    console.error("Error al guardar", id, err);
     S.saving[id] = "err";
+    S.saveError[id] = err.message;
     if (err.status === 401) { if (STATIC) token.set(""); S.admin = false; S.editing = false; showNotice("La sesión ha caducado. Vuelve a entrar para editar."); renderAdmin(); }
-    else toast("No se ha podido guardar");
+    else if (err.status === 403 && !err.retryAfterMs) toast(`No se ha podido guardar: el token no tiene permiso para escribir (${err.message})`);
+    else {
+      // El cambio no se pierde: se vuelve a intentar solo, cada vez más espaciado.
+      retries[id] = (retries[id] || 0) + 1;
+      const wait = Math.min(120000, 10000 * 2 ** (retries[id] - 1));
+      timers[id] = setTimeout(() => { if (S.saving[id] === "err") save(id); }, wait);
+      if (retries[id] === 1) toast(`No se ha podido guardar (${err.message}). Se reintentará solo.`);
+    }
   } finally {
     inFlight[id] = false;
     refreshCard(id);
@@ -830,8 +866,12 @@ function route() {
 addEventListener("popstate", route);
 addEventListener("hashchange", route);
 // Si se cierra la pestaña con cambios aún sin guardar, el navegador pregunta antes.
+// Al recuperar la conexión, se reintentan en el acto los cambios que no se pudieron guardar.
+addEventListener("online", () => {
+  for (const [id, st] of Object.entries(S.saving)) if (st === "err") { clearTimeout(timers[id]); save(id); }
+});
 addEventListener("beforeunload", (ev) => {
-  if (Object.values(S.saving).includes("pending")) ev.preventDefault();
+  if (Object.values(S.saving).some((st) => st === "pending" || st === "err")) ev.preventDefault();
 });
 
 /* ---------- arranque ---------- */
