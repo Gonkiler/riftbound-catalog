@@ -1,0 +1,47 @@
+{
+  "_comment": "Cartas que le faltan al tracker (Goodplayer01/riftbound-tracker). scripts/sync-cards.js las añade al catálogo y deja de usarlas en cuanto el tracker las trae con el mismo id. img vacío = la web muestra el marcador con el nombre.",
+  "cards": [
+    {
+      "id": "rad-r01", "name": "Fury Rune", "code": "RAD-R01", "set": "RAD", "rarity": "Common", "type": "Rune", "domains": "Fury",
+      "img": "https://cmsassets.rgpub.io/sanity/images/dsfx7636/game_data_live/e0337944fa56c357ab3b9a822064a8f58ead8315-744x1039.png",
+      "cmId": 917446, "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Radiance/Fury-Rune-V1-Common",
+      "source": "Galería oficial (playriftbound.com)"
+    },
+    {
+      "id": "rad-r06", "name": "Order Rune", "code": "RAD-R06", "set": "RAD", "rarity": "Common", "type": "Rune", "domains": "Order",
+      "img": "https://cmsassets.rgpub.io/sanity/images/dsfx7636/game_data_live/402fa10965dbee64aa1ddef654e4b9d9a5ccd28e-744x1039.png",
+      "cmId": 917456, "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Radiance/Order-Rune-V1-Common",
+      "source": "Galería oficial (playriftbound.com)"
+    },
+    {
+      "id": "rad-t-mech", "name": "Mech", "code": "RAD-T-MECH", "set": "RAD", "rarity": "Common", "type": "Token", "domains": "Colorless", "img": "",
+      "cmId": 917492, "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Radiance/Mech",
+      "source": "Cardmarket (sin número de colección conocido)"
+    },
+    {
+      "id": "rad-t-bird", "name": "Bird", "code": "RAD-T-BIRD", "set": "RAD", "rarity": "Common", "type": "Token", "domains": "Colorless", "img": "",
+      "cmId": 917614, "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Radiance/Bird",
+      "source": "Cardmarket (sin número de colección conocido)"
+    },
+    {
+      "id": "rad-t-empowered", "name": "Empowered", "code": "RAD-T-EMPOWERED", "set": "RAD", "rarity": "Common", "type": "Token", "domains": "Colorless", "img": "",
+      "cmId": 917615, "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Radiance/Empowered",
+      "source": "Cardmarket (sin número de colección conocido)"
+    },
+    {
+      "id": "rad-t-buff", "name": "Buff", "code": "RAD-T-BUFF", "set": "RAD", "rarity": "Common", "type": "Token", "domains": "Colorless", "img": "",
+      "cmId": 917616, "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Radiance/Buff",
+      "source": "Cardmarket (sin número de colección conocido)"
+    },
+    {
+      "id": "rad-t-recruit", "name": "Recruit", "code": "RAD-T-RECRUIT", "set": "RAD", "rarity": "Common", "type": "Token", "domains": "Colorless", "img": "",
+      "cmId": 917617, "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Radiance/Recruit",
+      "source": "Cardmarket (sin número de colección conocido)"
+    },
+    {
+      "id": "ven-t-mech", "name": "Mech", "code": "VEN-T-MECH", "set": "VEN", "rarity": "Common", "type": "Token", "domains": "Colorless", "img": "",
+      "cmId": 899230, "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Vendetta/Mech",
+      "source": "Cardmarket (sin número de colección conocido)"
+    }
+  ]
+}

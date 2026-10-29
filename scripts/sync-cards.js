@@ -6,7 +6,7 @@
 // lista de cartas (con las imágenes oficiales de Riot) y el enlace de cada carta
 // con su producto de Cardmarket. Ejecuta `npm run sync` cuando salga una colección nueva.
 
-import { writeFile, mkdir } from "node:fs/promises";
+import { readFile, writeFile, mkdir } from "node:fs/promises";
 
 const SRC = "https://raw.githubusercontent.com/Goodplayer01/riftbound-tracker/main/public";
 
@@ -47,6 +47,21 @@ for (const c of cardsSrc.cards) {
     (c.tags || []).filter((t) => KEEP_TAGS.has(t)),
   ]);
 }
+// Cartas añadidas a mano (data/cards-extra.json): solo las que el tracker aún no trae.
+const extra = JSON.parse(await readFile("data/cards-extra.json", "utf8")).cards;
+const trackerIds = new Set(cards.map((r) => r[0]));
+const trackerCodes = new Set(cards.map((r) => r[3].toUpperCase()));
+const extraUsed = [];
+for (const e of extra) {
+  if (!ID_RE.test(e.id)) throw new Error(`Id de carta inesperado en cards-extra.json: ${e.id}`);
+  if (trackerIds.has(e.id) || trackerCodes.has(e.code.toUpperCase())) {
+    console.log(`El tracker ya trae ${e.id} (${e.name}): puedes quitarla de data/cards-extra.json.`);
+    continue;
+  }
+  cards.push([e.id, e.name, e.sub || "", e.code, e.set, e.rarity, e.type, e.domains, e.img || "", e.tags || []]);
+  extraUsed.push(e);
+}
+
 cards.sort((a, b) => order.indexOf(a[4]) - order.indexOf(b[4]) || naturalKey(a[3]).localeCompare(naturalKey(b[3])));
 
 const ids = {};
@@ -58,6 +73,10 @@ for (const [id, p] of Object.entries(pricesSrc.cards)) {
   };
 }
 
+for (const e of extraUsed) {
+  if (e.cmId) ids[e.id] = { cmId: Number(e.cmId), url: e.cmUrl || null, snapshot: {} };
+}
+
 await mkdir("data", { recursive: true });
 await writeFile(
   "data/cards.json",
@@ -67,4 +86,4 @@ await writeFile(
   "data/cardmarket-ids.json",
   JSON.stringify({ snapshotAt: pricesSrc.guideCreatedAt || pricesSrc.updatedAt, cards: ids })
 );
-console.log(`${cards.length} cartas en ${sets.length} colecciones; ${Object.keys(ids).length} con producto de Cardmarket.`);
+console.log(`${cards.length} cartas en ${sets.length} colecciones (${extraUsed.length} de cards-extra.json); ${Object.keys(ids).length} con producto de Cardmarket.`);

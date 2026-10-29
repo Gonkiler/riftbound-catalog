@@ -21,6 +21,9 @@ const setIds = new Set(catalog.sets.map((s) => s.id));
 for (const row of catalog.cards) assert.ok(setIds.has(row[4]), `colección desconocida en ${row[0]}`);
 assert.equal(new Set(catalog.cards.map((r) => r[0])).size, catalog.cards.length, "hay ids de carta repetidos");
 assert.ok(Object.keys(ids.cards).length > 1000, "faltan ids de Cardmarket");
+const extra = JSON.parse(readFileSync("data/cards-extra.json", "utf8")).cards;
+const catalogIds = new Set(catalog.cards.map((r) => r[0]));
+for (const e of extra) assert.ok(catalogIds.has(e.id), `${e.id} está en cards-extra.json pero no en el catálogo: ejecuta npm run sync`);
 
 // Validación de copias
 assert.deepEqual(cleanLangs({ EN: { n: 2 } }), { EN: { n: 2, f: 0, p: 0 } });
