@@ -714,6 +714,108 @@
       "cmId": 917812,
       "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Radiance-Promos/Ekko-Revolutionary",
       "source": "Cardmarket (sin imagen conocida)"
+    },
+    {
+      "id": "sfd-r01b-p",
+      "name": "Fury Rune",
+      "code": "SFD-R01b-P",
+      "set": "SFD-NN",
+      "rarity": "Showcase",
+      "type": "Rune",
+      "domains": "Fury",
+      "img": "",
+      "tags": [
+        "promo",
+        "nexus-night"
+      ],
+      "cmId": 874107,
+      "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Spiritforged-Promos/Fury-Rune",
+      "source": "Cardmarket (expansión Spiritforged Promos). Código supuesto como el resto de runas Nexus Night; sin imagen conocida"
+    },
+    {
+      "id": "sfd-r02b-p",
+      "name": "Calm Rune",
+      "code": "SFD-R02b-P",
+      "set": "SFD-NN",
+      "rarity": "Showcase",
+      "type": "Rune",
+      "domains": "Calm",
+      "img": "",
+      "tags": [
+        "promo",
+        "nexus-night"
+      ],
+      "cmId": 874108,
+      "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Spiritforged-Promos/Calm-Rune",
+      "source": "Cardmarket (expansión Spiritforged Promos). Código supuesto como el resto de runas Nexus Night; sin imagen conocida"
+    },
+    {
+      "id": "sfd-r03b-p",
+      "name": "Mind Rune",
+      "code": "SFD-R03b-P",
+      "set": "SFD-NN",
+      "rarity": "Showcase",
+      "type": "Rune",
+      "domains": "Mind",
+      "img": "",
+      "tags": [
+        "promo",
+        "nexus-night"
+      ],
+      "cmId": 874109,
+      "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Spiritforged-Promos/Mind-Rune",
+      "source": "Cardmarket (expansión Spiritforged Promos). Código supuesto como el resto de runas Nexus Night; sin imagen conocida"
+    },
+    {
+      "id": "sfd-r04b-p",
+      "name": "Body Rune",
+      "code": "SFD-R04b-P",
+      "set": "SFD-NN",
+      "rarity": "Showcase",
+      "type": "Rune",
+      "domains": "Body",
+      "img": "",
+      "tags": [
+        "promo",
+        "nexus-night"
+      ],
+      "cmId": 874110,
+      "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Spiritforged-Promos/Body-Rune",
+      "source": "Cardmarket (expansión Spiritforged Promos). Código supuesto como el resto de runas Nexus Night; sin imagen conocida"
+    },
+    {
+      "id": "sfd-r05b-p",
+      "name": "Chaos Rune",
+      "code": "SFD-R05b-P",
+      "set": "SFD-NN",
+      "rarity": "Showcase",
+      "type": "Rune",
+      "domains": "Chaos",
+      "img": "",
+      "tags": [
+        "promo",
+        "nexus-night"
+      ],
+      "cmId": 874111,
+      "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Spiritforged-Promos/Chaos-Rune",
+      "source": "Cardmarket (expansión Spiritforged Promos). Código supuesto como el resto de runas Nexus Night; sin imagen conocida"
+    },
+    {
+      "id": "sfd-r06b-p",
+      "name": "Order Rune",
+      "code": "SFD-R06b-P",
+      "set": "SFD-NN",
+      "rarity": "Showcase",
+      "type": "Rune",
+      "domains": "Order",
+      "img": "",
+      "tags": [
+        "promo",
+        "nexus-night"
+      ],
+      "cmId": 874112,
+      "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Spiritforged-Promos/Order-Rune",
+      "source": "Cardmarket (expansión Spiritforged Promos). Código supuesto como el resto de runas Nexus Night; sin imagen conocida"
     }
   ],
   "sets": {
