@@ -151,6 +151,26 @@ async function ghReadCollection() {
   return { sha: f.sha, data: JSON.parse(b64decode(f.content)) };
 }
 
+// "Colección: Garen (OGS-013) +1 normal EN; Lux (OGS-014) −1 foil EN"
+// Hay muchas cartas con el mismo nombre, así que va el número y el cambio exacto.
+function commitMessage(before, batch) {
+  const KIND = { n: "normal", f: "foil", p: "promo" };
+  const parts = Object.entries(batch).map(([id, langs]) => {
+    const c = S.byId[id];
+    const label = c ? `${c.name} (${c.code.split("/")[0]})` : id;
+    const old = before[id] || {};
+    const deltas = [];
+    for (const lang of new Set([...Object.keys(old), ...Object.keys(langs)])) {
+      for (const k of ["n", "f", "p"]) {
+        const d = (langs[lang]?.[k] || 0) - (old[lang]?.[k] || 0);
+        if (d) deltas.push(`${d > 0 ? "+" : "−"}${Math.abs(d)} ${KIND[k]} ${lang}`);
+      }
+    }
+    return `${label} ${deltas.join(", ") || "sin cambios"}`;
+  });
+  return `Colección: ${parts.slice(0, 4).join("; ")}${parts.length > 4 ? ` y ${parts.length - 4} más` : ""}`;
+}
+
 // Los cambios se juntan un momento y se guardan en un solo commit.
 const ghQueue = { pending: {}, waiters: [], timer: null, running: false };
 function ghSave(id, langs) {
@@ -168,11 +188,10 @@ async function ghFlush() {
   ghQueue.waiters = [];
   if (!Object.keys(batch).length) { waiters.forEach((w) => w.resolve()); return; }
   ghQueue.running = true;
-  const names = Object.keys(batch).map((id) => S.byId[id]?.name || id);
-  const message = `Colección: ${names.slice(0, 3).join(", ")}${names.length > 3 ? ` y ${names.length - 3} más` : ""}`;
   try {
     for (let attempt = 0; ; attempt++) {
       const { sha, data } = await ghReadCollection();
+      const message = commitMessage(data, batch);
       Object.assign(data, batch);
       try {
         await gh(`/repos/${STATIC.repo}/contents/${COL_PATH}`, {
@@ -672,6 +691,10 @@ function route() {
   syncUrl(); // normaliza la URL (p. ej. sin colección → la primera)
 }
 addEventListener("popstate", route);
+// Si se cierra la pestaña con cambios aún sin guardar, el navegador pregunta antes.
+addEventListener("beforeunload", (ev) => {
+  if (Object.values(S.saving).includes("pending")) ev.preventDefault();
+});
 addEventListener("hashchange", route);
 
 /* ---------- arranque ---------- */
