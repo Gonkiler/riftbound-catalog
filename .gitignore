@@ -1,0 +1,7 @@
+node_modules/
+.env
+# Tu colección y la caché de precios no se suben al repositorio
+data/*.db
+data/*.db-*
+data/cache/
+.DS_Store

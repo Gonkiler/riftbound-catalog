@@ -1,0 +1,20 @@
+{
+  "name": "archivo-riftbound",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Catálogo personal de cartas Riftbound con copias por idioma y acabado, y precios de Cardmarket.",
+  "type": "module",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "start": "node --env-file-if-exists=.env --disable-warning=ExperimentalWarning server/index.js",
+    "dev": "node --env-file-if-exists=.env --disable-warning=ExperimentalWarning --watch server/index.js",
+    "sync": "node scripts/sync-cards.js",
+    "import": "node --env-file-if-exists=.env --disable-warning=ExperimentalWarning scripts/import-collection.js",
+    "check": "node --disable-warning=ExperimentalWarning scripts/check.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}

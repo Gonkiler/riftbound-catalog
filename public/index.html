@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Archivo Riftbound</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Barlow:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+<div class="app">
+  <nav class="rail" aria-label="Colecciones">
+    <div class="brand">Archivo Riftbound<small>Catálogo personal</small></div>
+    <div class="setgroup"><h2>Colecciones</h2><ul class="setlist" id="mainSets"></ul></div>
+    <div class="setgroup"><h2>Promos Nexus Night</h2><ul class="setlist" id="nnSets"></ul></div>
+    <div class="railfoot" id="railFoot">Cargando cartas…</div>
+  </nav>
+  <main id="main">
+    <header class="head">
+      <div class="titlerow">
+        <h1 id="setTitle">Cargando…</h1>
+        <div class="stats">
+          <div class="stat"><b id="stUnique">–</b><span>Cartas distintas</span></div>
+          <div class="stat"><b id="stCopies">–</b><span>Copias</span></div>
+          <div class="stat"><b id="stFoil">–</b><span>Foil</span></div>
+        </div>
+      </div>
+      <div class="tools">
+        <input class="search" id="q" type="search" placeholder="Buscar por nombre o número" aria-label="Buscar carta">
+        <div class="seg" role="group" aria-label="Mostrar">
+          <button type="button" data-own="all" aria-pressed="true">Todas</button>
+          <button type="button" data-own="have" aria-pressed="false">Las tengo</button>
+          <button type="button" data-own="miss" aria-pressed="false">Me faltan</button>
+        </div>
+        <div id="rarChips" class="tools"></div>
+        <button type="button" class="adminbtn" id="adminBtn" hidden aria-pressed="false">Modo administrador</button>
+        <button type="button" class="logout" id="logoutBtn" hidden>Cerrar sesión</button>
+      </div>
+      <div class="notice" id="notice" hidden></div>
+    </header>
+    <section class="grid" id="grid" aria-live="polite"></section>
+  </main>
+</div>
+<div class="scrim" id="scrim" hidden></div>
+</body>
+</html>
