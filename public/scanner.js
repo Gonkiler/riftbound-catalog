@@ -1,31 +1,45 @@
 // Escáner de cartas con la cámara. Se carga solo al pulsar "Escanear" (import dinámico desde app.js).
 //
-// Cómo reconoce una carta (cada ~0,5 s mientras la cámara está abierta):
-// 1. Recorta lo que hay dentro del marco guía (proporción de carta).
-// 2. Huella de imagen (fingerprint.js) → las cartas más parecidas de todo el catálogo.
-// 3. OCR (Tesseract.js) de la línea de abajo a la izquierda: "RAD • 138/167 • EN" → colección,
-//    número e idioma. Si se lee, manda el número; la huella elige entre normal / promo / variante.
-// 4. Si el número no se lee, vale la imagen sola cuando la mejor coincidencia es clara y se
-//    repite en dos fotogramas seguidos.
+// Funciona con dos bucles independientes, para que la respuesta sea rápida:
+// - Bucle visual (cada ~250 ms): recorta el marco guía, calcula la huella de imagen
+//   (fingerprint.js) y busca la carta más parecida. Si está clara, la muestra al momento.
+//   Prueba a la vez el encuadre vertical y el horizontal (campos de batalla) y gira el marco solo.
+// - Bucle de texto (lo más rápido que deje el OCR): lee la línea "RAD • 138/167 • EN" con
+//   Tesseract.js. Cuando lo consigue, confirma la carta, elige bien entre normal / promo /
+//   variante y pone el idioma impreso.
+// Mientras se ve un resultado, los dos bucles siguen mirando: si pones otra carta, cambia solo.
 import { FP_W, FP_H, fingerprint, decode } from "./fingerprint.js";
 import { STRIP, prepStrip, parseCode, buildIndex, rankCandidates, nearest, baseKey } from "./scan-core.js";
 
 const TESSERACT_URL = "https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js";
-const CARD_RATIO = 744 / 1039;
+const CARD_RATIO = 744 / 1039; // ancho / alto de una carta vertical
 const LANGS = [["EN", "Inglés"], ["ES", "Español"], ["FR", "Francés"], ["DE", "Alemán"], ["IT", "Italiano"], ["ZH", "Chino"], ["JA", "Japonés"], ["KO", "Coreano"]];
 const PREFS_KEY = "rb_scanner";
-const MAX_IMAGE_D = 0.27; // por encima, la "mejor" coincidencia por imagen no es fiable (o no hay carta)
-const IMAGE_MARGIN = 0.02; // ventaja mínima sobre la segunda para aceptar por imagen
+const VISUAL_MS = 250;      // cada cuánto se mira la imagen
+const MAX_IMAGE_D = 0.27;   // por encima, la "mejor" coincidencia no es fiable (o no hay carta)
+const IMAGE_MARGIN = 0.02;  // ventaja mínima sobre la segunda para aceptar por imagen
+const INSTANT_D = 0.17, INSTANT_MARGIN = 0.05; // tan clara que vale con un solo fotograma
+const OCR_HEIGHT = 100;     // alto (px) al que se escala la franja del número para el OCR
 
 const prefs = (() => { try { return JSON.parse(localStorage.getItem(PREFS_KEY)) || {}; } catch { return {}; } })();
 const savePrefs = () => { try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)); } catch {} };
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+// Huellas: { all: Map id → huella, p: Map (cartas verticales), l: Map (horizontales) }
 let fpCache = null;
 async function loadFingerprints(url) {
   fpCache ||= fetch(url, { cache: "no-cache" })
     .then((r) => { if (!r.ok) throw new Error(`No se han podido cargar las huellas (${r.status})`); return r.json(); })
-    .then((j) => new Map(Object.entries(j.cards).map(([id, v]) => [id, decode(v.fp)])))
+    .then((j) => {
+      const all = new Map(), p = new Map(), l = new Map();
+      for (const [id, v] of Object.entries(j.cards)) {
+        const fp = decode(v.fp);
+        all.set(id, fp);
+        (v.o === "l" ? l : p).set(id, fp);
+      }
+      return { all, p, l };
+    })
     .catch((e) => { fpCache = null; throw e; });
   return fpCache;
 }
@@ -49,15 +63,21 @@ function loadTesseract() {
 
 /**
  * Abre el escáner a pantalla completa.
- * opts: { cards, byId, fingerprintsUrl, canEdit(), onAdd(id, lang, finish) → Promise, onLogin(), openCard(id), label(card) }
+ * opts: { cards, byId, fingerprintsUrl, setName(id), canEdit(), onAdd(id, lang, finish, delta), onLogin(), openCard(id) }
  */
 export function openScanner(opts) {
   const sets = new Set(opts.cards.map((c) => c.code.split("-")[0].toUpperCase()));
   const idx = buildIndex(opts.cards);
-  let fps = null, worker = null, stream = null, timer = null, busy = false, ocrBusy = false, closed = false;
-  let lastImageTop = null, result = null, cooldownId = null, session = [];
+  let fps = null, worker = null, stream = null, closed = false;
+  let result = null, cooldownId = null, session = [];
+  let stableId = null;       // mejor coincidencia por imagen del fotograma anterior
+  let lastFp = { p: null, l: null }; // última huella de cada encuadre (para el OCR)
+  let searchStart = performance.now();
+  let lastTopId = null, topSince = searchStart; // desde cuándo se ve la carta actual (para medir el tiempo al cambiarla)
   prefs.lang ||= "EN";
   prefs.finish ||= "n";
+  prefs.orient ||= "auto";
+  let orient = prefs.orient === "l" ? "l" : "p"; // encuadre que se ve ahora
 
   const root = document.createElement("div");
   root.className = "scanner";
@@ -71,11 +91,15 @@ export function openScanner(opts) {
       <div class="sc-top">
         <button type="button" class="sc-btn sc-close" aria-label="Cerrar escáner">×</button>
         <div class="sc-status" aria-live="polite">Abriendo la cámara…</div>
+        <button type="button" class="sc-btn sc-orient" aria-label="Orientación del marco" title="Vertical, horizontal (campos de batalla) o automático">
+          <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="3" width="10" height="14" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="3" y="12" width="14" height="9" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.8" opacity=".6"/></svg>
+          <span class="sc-orient-label"></span>
+        </button>
         <button type="button" class="sc-btn sc-torch" hidden aria-pressed="false" aria-label="Linterna">
           <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2h10l-2 6v3l-2 11h-2L9 11V8z" fill="currentColor"/></svg>
         </button>
       </div>
-      <p class="sc-hint">Coloca la carta dentro del marco, con la línea del número (abajo a la izquierda) visible y sin reflejos.</p>
+      <p class="sc-hint">Llena el marco con la carta, con la línea del número (abajo a la izquierda) dentro de la zona punteada. Los campos de batalla, en horizontal.</p>
     </div>
     <div class="sc-panel">
       <div class="sc-result" hidden></div>
@@ -96,12 +120,18 @@ export function openScanner(opts) {
   document.body.append(root);
   document.body.classList.add("modal");
   const $ = (sel) => root.querySelector(sel);
-  const video = $(".sc-video"), guide = $(".sc-guide"), status = $(".sc-status"), resultEl = $(".sc-result");
+  const video = $(".sc-video"), guide = $(".sc-guide"), status = $(".sc-status"), resultEl = $(".sc-result"), stage = $(".sc-stage");
   $(".sc-lang").value = prefs.lang;
   $(".sc-finish").value = prefs.finish;
   $(".sc-auto").checked = Boolean(prefs.auto);
 
   const setStatus = (t, kind = "") => { status.textContent = t; status.dataset.kind = kind; };
+  function renderSummary() {
+    const lang = LANGS.find(([c]) => c === prefs.lang)?.[1] || prefs.lang;
+    $(".sc-sumtext").textContent = `${lang} · ${prefs.finish === "f" ? "Foil" : "Normal"}${prefs.auto && opts.canEdit() ? " · automático" : ""}`;
+    $(".sc-orient-label").textContent = { auto: "Auto", p: "Vert.", l: "Horiz." }[prefs.orient];
+  }
+  renderSummary();
 
   // ---------- cámara ----------
   async function startCamera(deviceId) {
@@ -111,9 +141,9 @@ export function openScanner(opts) {
       return;
     }
     const size = { width: { ideal: 1920 }, height: { ideal: 1080 } };
-    const video_ = deviceId ? { deviceId: { exact: deviceId }, ...size } : { facingMode: { ideal: "environment" }, ...size };
+    const constraints = deviceId ? { deviceId: { exact: deviceId }, ...size } : { facingMode: { ideal: "environment" }, ...size };
     try {
-      stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: video_ });
+      stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: constraints });
     } catch (err) {
       if (deviceId) { delete prefs.deviceId; savePrefs(); return startCamera(); }
       setStatus(err.name === "NotAllowedError" ? "No hay permiso para usar la cámara. Actívalo en el navegador o usa «Usar una foto»." : `No se ha podido abrir la cámara (${err.name}).`, "err");
@@ -133,152 +163,169 @@ export function openScanner(opts) {
     sel.value = track.getSettings().deviceId || "";
     $(".sc-camfield").hidden = cams.length < 2;
     layoutGuide();
+    searchStart = performance.now();
     setStatus("Buscando carta…");
-    loop();
   }
   function stopCamera() {
-    clearTimeout(timer);
     if (stream) for (const t of stream.getTracks()) t.stop();
     stream = null;
   }
 
-  // Marco guía: lo más grande posible con proporción de carta, centrado en la imagen visible.
+  // ---------- marco guía ----------
+  // Rectángulo del marco (en px de la pantalla, relativo al escenario) para una orientación.
+  function guideBox(o) {
+    const r = stage.getBoundingClientRect();
+    const ratio = o === "l" ? 1 / CARD_RATIO : CARD_RATIO; // ancho / alto
+    const h = Math.min(r.height * 0.8, (r.width * 0.88) / ratio);
+    const w = h * ratio;
+    return { x: (r.width - w) / 2, y: (r.height - h) / 2, w, h };
+  }
   function layoutGuide() {
-    const r = $(".sc-stage").getBoundingClientRect();
-    const h = Math.min(r.height * 0.8, (r.width * 0.82) / CARD_RATIO);
-    const w = h * CARD_RATIO;
-    Object.assign(guide.style, { width: `${w}px`, height: `${h}px`, left: `${(r.width - w) / 2}px`, top: `${(r.height - h) / 2}px` });
+    const b = guideBox(orient);
+    Object.assign(guide.style, { width: `${b.w}px`, height: `${b.h}px`, left: `${b.x}px`, top: `${b.y}px` });
+    guide.classList.toggle("land", orient === "l");
   }
   // El hueco de la cámara cambia al aparecer el resultado o al girar el móvil: se recoloca el marco.
   const ro = new ResizeObserver(layoutGuide);
-  ro.observe($(".sc-stage"));
-  function renderSummary() {
-    const lang = LANGS.find(([c]) => c === prefs.lang)?.[1] || prefs.lang;
-    $(".sc-sumtext").textContent = `${lang} · ${prefs.finish === "f" ? "Foil" : "Normal"}${prefs.auto && opts.canEdit() ? " · automático" : ""}`;
-  }
-  renderSummary();
+  ro.observe(stage);
 
-  // Rectángulo del marco en píxeles del vídeo (el vídeo se muestra con object-fit: cover).
-  function guideInVideo() {
-    const stage = $(".sc-stage").getBoundingClientRect(), g = guide.getBoundingClientRect();
+  // El mismo rectángulo en píxeles del vídeo (el vídeo se muestra con object-fit: cover).
+  function boxInVideo(o) {
     const vw = video.videoWidth, vh = video.videoHeight;
-    const scale = Math.max(stage.width / vw, stage.height / vh);
-    const ox = (stage.width - vw * scale) / 2, oy = (stage.height - vh * scale) / 2;
-    return { x: (g.left - stage.left - ox) / scale, y: (g.top - stage.top - oy) / scale, w: g.width / scale, h: g.height / scale };
+    if (!vw || !vh) return null;
+    const r = stage.getBoundingClientRect(), b = guideBox(o);
+    const scale = Math.max(r.width / vw, r.height / vh);
+    const ox = (r.width - vw * scale) / 2, oy = (r.height - vh * scale) / 2;
+    return { x: (b.x - ox) / scale, y: (b.y - oy) / scale, w: b.w / scale, h: b.h / scale };
   }
 
-  // ---------- análisis de un fotograma (o de una foto) ----------
-  const cardCanvas = document.createElement("canvas");
-  cardCanvas.width = 600; cardCanvas.height = Math.round(600 / CARD_RATIO);
-  const fpCanvas = document.createElement("canvas");
-  fpCanvas.width = FP_W; fpCanvas.height = FP_H;
+  // ---------- huella y franja del número ----------
+  const fpCanvas = { p: Object.assign(document.createElement("canvas"), { width: FP_W, height: FP_H }), l: Object.assign(document.createElement("canvas"), { width: FP_H, height: FP_W }) };
   const stripCanvas = document.createElement("canvas");
+  const ocrCanvas = document.createElement("canvas");
 
-  function capture(source, rect) {
-    const cc = cardCanvas.getContext("2d", { willReadFrequently: true });
-    cc.imageSmoothingQuality = "high";
-    cc.drawImage(source, rect.x, rect.y, rect.w, rect.h, 0, 0, cardCanvas.width, cardCanvas.height);
-    const fc = fpCanvas.getContext("2d", { willReadFrequently: true });
-    fc.imageSmoothingQuality = "high";
-    fc.drawImage(cardCanvas, 0, 0, FP_W, FP_H);
-    const fp = fingerprint(fc.getImageData(0, 0, FP_W, FP_H).data, FP_W, FP_H, 4);
-    // Franja del número, a la resolución original para que el OCR tenga píxeles de sobra.
+  function fingerprintOf(source, rect, o) {
+    const c = fpCanvas[o];
+    const ctx = c.getContext("2d", { willReadFrequently: true });
+    ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(source, rect.x, rect.y, rect.w, rect.h, 0, 0, c.width, c.height);
+    return fingerprint(ctx.getImageData(0, 0, c.width, c.height).data, c.width, c.height, 4);
+  }
+  function stripOf(source, rect) {
+    // La línea del número está abajo a la izquierda también en los campos de batalla.
     const sx = rect.x + rect.w * STRIP.x0, sy = rect.y + rect.h * STRIP.y0;
     const sw = rect.w * (STRIP.x1 - STRIP.x0), sh = rect.h * (STRIP.y1 - STRIP.y0);
-    const scale = Math.max(1, 160 / sh);
-    stripCanvas.width = Math.round(sw * scale); stripCanvas.height = Math.round(sh * scale);
-    const sc = stripCanvas.getContext("2d", { willReadFrequently: true });
-    sc.imageSmoothingQuality = "high";
-    sc.drawImage(source, sx, sy, sw, sh, 0, 0, stripCanvas.width, stripCanvas.height);
-    const raw = sc.getImageData(0, 0, stripCanvas.width, stripCanvas.height);
-    return { fp, strip: raw };
+    const scale = OCR_HEIGHT / sh;
+    stripCanvas.width = Math.max(1, Math.round(sw * scale)); stripCanvas.height = OCR_HEIGHT;
+    const ctx = stripCanvas.getContext("2d", { willReadFrequently: true });
+    ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(source, sx, sy, sw, sh, 0, 0, stripCanvas.width, stripCanvas.height);
+    return ctx.getImageData(0, 0, stripCanvas.width, stripCanvas.height);
+  }
+  // Una pasada de OCR (texto claro u oscuro según `invert`). Las pasadas se alternan entre intentos.
+  async function ocrOnce(strip, invert) {
+    ocrCanvas.width = strip.width; ocrCanvas.height = strip.height;
+    ocrCanvas.getContext("2d").putImageData(new ImageData(prepStrip(strip.data, strip.width, strip.height, invert), strip.width, strip.height), 0, 0);
+    const { data } = await worker.recognize(ocrCanvas);
+    const read = parseCode(data.text, sets);
+    return read && (read.total || /^[RT]/.test(read.num)) ? read : null;
   }
 
-  async function ocr(strip) {
-    if (!worker) return null;
-    const c = document.createElement("canvas");
-    c.width = strip.width; c.height = strip.height;
-    const ctx = c.getContext("2d");
-    for (const inv of [true, false]) {
-      const img = new ImageData(prepStrip(strip.data, strip.width, strip.height, inv), strip.width, strip.height);
-      ctx.putImageData(img, 0, 0);
-      const { data } = await worker.recognize(c);
-      const read = parseCode(data.text, sets);
-      if (read && (read.total || /^[RT]/.test(read.num))) return read;
+  // Mira la imagen en los dos encuadres y devuelve el mejor.
+  function look(source, rects) {
+    let best = null;
+    for (const o of ["p", "l"]) {
+      if (prefs.orient !== "auto" && o !== prefs.orient) continue;
+      const rect = rects[o];
+      if (!rect) continue;
+      const fp = fingerprintOf(source, rect, o);
+      lastFp[o] = fp;
+      const near = nearest(fp, fps[o], 10);
+      if (near.length && (!best || near[0].d < best.near[0].d)) best = { o, rect, fp, near };
     }
-    return null;
+    return best;
   }
 
-  async function analyze(source, rect, { still = false } = {}) {
-    const { fp, strip } = capture(source, rect);
-    const near = nearest(fp, fps, 5);
-    let read = null;
-    if (!ocrBusy) {
-      ocrBusy = true;
-      try { read = await ocr(strip); } finally { ocrBusy = false; }
-    }
-    if (read) {
-      const ranked = rankCandidates(read, idx, fps, fp);
-      if (ranked.length) return { how: "ocr", read, ranked, near };
-    }
-    // Sin número: vale la imagen si es clara (y en vídeo, si se repite en dos fotogramas).
-    const top = near[0];
-    const clear = top && top.d < MAX_IMAGE_D && (!near[1] || near[1].d - top.d > IMAGE_MARGIN);
-    if (clear && (still || lastImageTop === top.id)) {
-      const card = opts.byId[top.id];
-      const key = baseKey(card.code);
-      const [set, num] = key.split(/-(.+)/);
-      const ranked = rankCandidates({ set, num }, idx, fps, fp);
-      return { how: "image", read: null, ranked: ranked.length ? ranked : [{ card, d: top.d }], near };
-    }
-    lastImageTop = top && top.d < MAX_IMAGE_D ? top.id : null;
-    return { how: null, near };
+  function candidatesFor(cardId, fp) {
+    const card = opts.byId[cardId];
+    const [set, num] = baseKey(card.code).split(/-(.+)/);
+    const ranked = rankCandidates({ set, num }, idx, fps.all, fp);
+    return ranked.length ? ranked : Object.assign([{ card, d: null }], { ambiguous: false });
   }
 
-  async function loop() {
-    if (closed || !stream) return;
-    if (!busy && !result && video.readyState >= 2 && video.videoWidth) {
-      busy = true;
+  const currentCard = () => (result ? result.ranked[result.pick].card : null);
+  const sameCard = (a, b) => a && b && baseKey(a.code) === baseKey(b.code);
+
+  // ---------- bucle visual ----------
+  async function visualLoop() {
+    while (!closed) {
+      await sleep(VISUAL_MS);
+      if (!fps || !stream || video.readyState < 2 || document.hidden) continue;
       try {
-        const res = await analyze(video, guideInVideo());
-        if (closed) return;
-        if (res.how) {
-          const top = res.ranked[0].card;
-          // Después de añadir una carta, no se vuelve a detectar la misma hasta que se quite del marco.
-          if (cooldownId === top.id) setStatus("Retira la carta o pon otra");
-          else showResult(res);
-        } else {
-          if (cooldownId && !(res.near[0] && res.near[0].d < MAX_IMAGE_D && res.near[0].id === cooldownId)) cooldownId = null;
-          setStatus(worker ? "Buscando carta…" : "Buscando carta… (cargando el lector de texto)");
+        const best = look(video, { p: boxInVideo("p"), l: boxInVideo("l") });
+        if (!best) continue;
+        // Auto: si la carta encaja mejor en horizontal (o al revés), se gira el marco.
+        if (prefs.orient === "auto" && best.o !== orient && best.near[0].d < MAX_IMAGE_D) { orient = best.o; layoutGuide(); }
+        const top = best.near[0];
+        if (top.id !== lastTopId) { lastTopId = top.id; topSince = performance.now(); }
+        // La ventaja se mide contra la siguiente carta *distinta*: su propia promo o variante
+        // se parece igual y no debe frenar la detección (luego se elige entre ellas).
+        const topKey = baseKey(opts.byId[top.id].code);
+        const rival = best.near.find((n) => baseKey(opts.byId[n.id].code) !== topKey);
+        const gap = rival ? rival.d - top.d : 1;
+        const clear = top.d < MAX_IMAGE_D && gap > IMAGE_MARGIN;
+        const instant = top.d < INSTANT_D && gap > INSTANT_MARGIN;
+        const confirmed = clear && (instant || stableId === top.id);
+        stableId = clear ? top.id : null;
+        if (!clear) {
+          // Se ha quitado la carta recién añadida: ya se puede volver a detectar.
+          if (cooldownId && !(top.d < MAX_IMAGE_D && top.id === cooldownId)) cooldownId = null;
+          if (!result) setStatus(worker ? "Buscando carta…" : "Buscando carta… (cargando el lector de texto)");
+          continue;
         }
+        if (!confirmed) continue;
+        const card = opts.byId[top.id];
+        if (cooldownId && sameCard(card, opts.byId[cooldownId])) { if (!result) setStatus("Retira la carta o pon otra"); continue; }
+        if (result && sameCard(card, currentCard())) continue; // la misma de antes: nada que hacer
+        // Carta nueva (o cambio de carta con un resultado a la vista).
+        show({ how: "image", read: null, ranked: candidatesFor(top.id, best.fp), near: best.near, o: best.o }, Boolean(result));
       } catch (err) {
         console.error(err);
-        setStatus(`Error al analizar: ${err.message}`, "err");
-      } finally {
-        busy = false;
       }
-    } else if (!busy && result && result.how === "image" && worker && (result.tries || 0) < 8 && video.readyState >= 2) {
-      // Reconocida por la imagen: se sigue intentando leer el número un rato para confirmar
-      // la carta y saber el idioma (el lector de texto puede haber tardado en cargar).
-      busy = true;
-      result.tries = (result.tries || 0) + 1;
+    }
+  }
+
+  // ---------- bucle de texto (OCR) ----------
+  async function ocrLoop() {
+    let invert = true;
+    while (!closed) {
+      // Sin trabajo: no hay lector, no hay cámara o la carta ya está confirmada por el número.
+      if (!worker || !fps || !stream || video.readyState < 2 || document.hidden || (result && result.how === "ocr")) { await sleep(200); continue; }
       try {
-        const { fp, strip } = capture(video, guideInVideo());
-        const read = await ocr(strip);
-        const current = result && result.ranked[result.pick].card;
-        if (read && current && `${read.set}-${read.num}` === baseKey(current.code)) {
-          const ranked = rankCandidates(read, idx, fps, fp);
-          const keep = Math.max(0, ranked.findIndex((r) => r.card.id === current.id));
-          result = { ...result, how: "ocr", read, ranked, pick: keep, lang: read.lang || result.lang, langFromCard: Boolean(read.lang) };
+        const rect = boxInVideo(orient);
+        if (!rect) { await sleep(200); continue; }
+        const read = await ocrOnce(stripOf(video, rect), invert);
+        invert = !invert;
+        if (closed || !read) continue;
+        const ranked = rankCandidates(read, idx, fps.all, lastFp[orient]);
+        if (!ranked.length) continue;
+        const card = ranked[0].card;
+        if (cooldownId && sameCard(card, opts.byId[cooldownId])) continue;
+        if (result && sameCard(card, currentCard())) {
+          // Confirma la carta que ya se ve: número leído, mejor variante e idioma impreso.
+          const keepId = result.userPicked ? currentCard().id : null;
+          const pick = keepId ? Math.max(0, ranked.findIndex((r) => r.card.id === keepId)) : 0;
+          result = { ...result, how: "ocr", read, ranked, pick, lang: result.userLang ? result.lang : read.lang || result.lang };
           renderResult();
+          maybeAutoAdd();
+        } else {
+          show({ how: "ocr", read, ranked, near: [], o: orient }, Boolean(result));
         }
       } catch (err) {
         console.error(err);
-      } finally {
-        busy = false;
+        await sleep(500);
       }
     }
-    timer = setTimeout(loop, result ? 400 : 350);
   }
 
   // ---------- resultado ----------
@@ -292,24 +339,28 @@ export function openScanner(opts) {
     return card.rarity === "Showcase" ? "Showcase" : "Normal";
   }
 
-  function showResult(res) {
-    result = { ...res, pick: 0, lang: res.read?.lang || prefs.lang };
+  function show(res, replaced) {
+    // Tiempo desde que se empezó a buscar o, si se cambia de carta, desde que apareció la nueva.
+    const ms = Math.max(VISUAL_MS, performance.now() - (replaced ? Math.max(searchStart, topSince) : searchStart));
+    result = { ...res, pick: 0, lang: res.read?.lang || prefs.lang, ms };
     if (navigator.vibrate) navigator.vibrate(40);
-    if (opts.canEdit() && prefs.auto && !res.ranked.ambiguous && res.how === "ocr") {
-      addCurrent(true);
-      return;
-    }
-    renderResult();
+    renderResult(replaced ? "Nueva carta detectada" : "");
+    maybeAutoAdd();
   }
 
-  function renderResult() {
+  function maybeAutoAdd() {
+    if (result && opts.canEdit() && prefs.auto && result.how === "ocr" && !result.ranked.ambiguous) addCurrent(true);
+  }
+
+  function renderResult(note = "") {
     if (!result) { resultEl.hidden = true; resultEl.innerHTML = ""; return; }
     const { ranked, read, how } = result;
     const card = ranked[result.pick].card;
     const thumb = card.img ? (card.img.includes("cmsassets.rgpub.io") ? `${card.img}?w=240&auto=format` : card.img) : "";
+    const secs = `${(result.ms / 1000).toLocaleString("es-ES", { maximumFractionDigits: 1 })} s`;
     const source = how === "ocr"
-      ? `Leído: <b>${esc(read.raw)}</b>${read.lang ? "" : " · sin idioma impreso"}`
-      : "Reconocida por la imagen (no se ha podido leer el número)";
+      ? `Leído: <b>${esc(read.raw)}</b>${read.lang ? "" : " · sin idioma impreso"} · ${secs}`
+      : `Reconocida por la imagen · ${secs}${worker ? " · leyendo el número…" : ""}`;
     const variants = ranked.length > 1
       ? `<div class="sc-variants" role="group" aria-label="Variante">${ranked.slice(0, 6).map((r, i) => `<button type="button" data-pick="${i}" aria-pressed="${i === result.pick}">${esc(variantLabel(r.card))}<small>${esc(r.card.code)}</small></button>`).join("")}</div>
          ${ranked.ambiguous ? `<p class="sc-note">La normal y la promo se ven casi iguales: comprueba el sello de abajo y elige.</p>` : ""}`
@@ -317,6 +368,7 @@ export function openScanner(opts) {
     const langs = `<div class="sc-langs" role="group" aria-label="Idioma">${LANGS.map(([c]) => `<button type="button" data-lang="${c}" aria-pressed="${c === result.lang}">${c}</button>`).join("")}</div>`;
     const edit = opts.canEdit();
     resultEl.innerHTML = `
+      ${note ? `<p class="sc-new">${esc(note)}</p>` : ""}
       <div class="sc-card">
         ${thumb ? `<img src="${esc(thumb)}" alt="">` : `<div class="sc-noimg">${esc(card.name)}</div>`}
         <div class="sc-info">
@@ -338,8 +390,16 @@ export function openScanner(opts) {
     setStatus(`${card.name} · ${card.code}`, "ok");
   }
 
+  function clearResult(status = "Buscando carta…") {
+    result = null;
+    stableId = null;
+    searchStart = performance.now();
+    renderResult();
+    setStatus(status);
+  }
+
   async function addCurrent(auto = false) {
-    const card = result.ranked[result.pick].card;
+    const card = currentCard();
     const lang = result.lang, finish = prefs.finish;
     try {
       await opts.onAdd(card.id, lang, finish);
@@ -347,10 +407,7 @@ export function openScanner(opts) {
       renderSession();
       flash(`+1 ${card.name} (${lang}${finish === "f" ? ", foil" : ""})`);
       cooldownId = card.id;
-      result = null;
-      lastImageTop = null;
-      renderResult();
-      setStatus(auto ? `Añadida: ${card.name}. Pon la siguiente.` : "Buscando carta…", "ok");
+      clearResult(auto ? `Añadida: ${card.name}. Pon la siguiente.` : "Buscando carta…");
     } catch (err) {
       setStatus(`No se ha podido añadir: ${err.message}`, "err");
     }
@@ -367,21 +424,31 @@ export function openScanner(opts) {
     const f = document.createElement("div");
     f.className = "sc-flash";
     f.textContent = text;
-    $(".sc-stage").append(f);
+    stage.append(f);
     setTimeout(() => f.remove(), 1600);
   }
 
   // ---------- foto suelta (sin cámara, o como alternativa) ----------
   async function analyzeFile(file) {
     const bmp = await createImageBitmap(file);
-    // Se asume que la carta ocupa casi toda la foto: recorte centrado con proporción de carta.
-    let w = bmp.width, h = w / CARD_RATIO;
-    if (h > bmp.height) { h = bmp.height; w = h * CARD_RATIO; }
-    w *= 0.98; h *= 0.98;
     setStatus("Analizando la foto…");
-    const res = await analyze(bmp, { x: (bmp.width - w) / 2, y: (bmp.height - h) / 2, w, h }, { still: true });
-    if (res.how) showResult(res);
-    else setStatus("No he reconocido la carta en la foto. Prueba con otra más cerca y sin reflejos.", "err");
+    searchStart = performance.now();
+    // Se asume que la carta ocupa casi toda la foto: recorte centrado, en vertical y en horizontal.
+    const crop = (ratio) => {
+      let w = bmp.width, h = w / ratio;
+      if (h > bmp.height) { h = bmp.height; w = h * ratio; }
+      w *= 0.98; h *= 0.98;
+      return { x: (bmp.width - w) / 2, y: (bmp.height - h) / 2, w, h };
+    };
+    const best = look(bmp, { p: crop(CARD_RATIO), l: crop(1 / CARD_RATIO) });
+    let read = null;
+    if (worker && best) for (const inv of [true, false]) { read = await ocrOnce(stripOf(bmp, best.rect), inv); if (read) break; }
+    if (read) {
+      const ranked = rankCandidates(read, idx, fps.all, best.fp);
+      if (ranked.length) return show({ how: "ocr", read, ranked, near: best.near, o: best.o }, false);
+    }
+    if (best && best.near[0].d < MAX_IMAGE_D) return show({ how: "image", read: null, ranked: candidatesFor(best.near[0].id, best.fp), near: best.near, o: best.o }, false);
+    setStatus("No he reconocido la carta en la foto. Prueba con otra más cerca y sin reflejos.", "err");
   }
 
   // ---------- eventos ----------
@@ -393,24 +460,30 @@ export function openScanner(opts) {
       stream?.getVideoTracks()[0].applyConstraints({ advanced: [{ torch: on }] }).then(() => b.setAttribute("aria-pressed", on)).catch(() => {});
       return;
     }
+    if (t.closest(".sc-orient")) {
+      prefs.orient = { auto: "p", p: "l", l: "auto" }[prefs.orient];
+      savePrefs();
+      if (prefs.orient !== "auto") orient = prefs.orient;
+      layoutGuide();
+      renderSummary();
+      return;
+    }
     const pick = t.closest("[data-pick]");
-    if (pick) { result.pick = Number(pick.dataset.pick); renderResult(); return; }
+    if (pick) { result.pick = Number(pick.dataset.pick); result.userPicked = true; renderResult(); return; }
     const lang = t.closest("[data-lang]");
-    if (lang) { result.lang = lang.dataset.lang; renderResult(); return; }
+    if (lang) { result.lang = lang.dataset.lang; result.userLang = true; renderResult(); return; }
     const nearBtn = t.closest("[data-near]");
     if (nearBtn) {
-      const card = opts.byId[nearBtn.dataset.near];
-      const key = baseKey(card.code).split(/-(.+)/);
-      const ranked = rankCandidates({ set: key[0], num: key[1] }, idx, fps, null);
-      const i = Math.max(0, ranked.findIndex((r) => r.card.id === card.id));
-      result = { ...result, ranked, pick: i };
+      const ranked = candidatesFor(nearBtn.dataset.near, null);
+      const i = Math.max(0, ranked.findIndex((r) => r.card.id === nearBtn.dataset.near));
+      result = { ...result, ranked, pick: i, userPicked: true };
       renderResult();
       return;
     }
     if (t.closest(".sc-add")) return addCurrent();
     if (t.closest(".sc-login")) { close(); opts.onLogin(); return; }
-    if (t.closest(".sc-view")) { const id = result.ranked[result.pick].card.id; close(); opts.openCard(id); return; }
-    if (t.closest(".sc-next")) { cooldownId = result.ranked[result.pick].card.id; result = null; renderResult(); setStatus("Buscando carta…"); return; }
+    if (t.closest(".sc-view")) { const id = currentCard().id; close(); opts.openCard(id); return; }
+    if (t.closest(".sc-next")) { cooldownId = currentCard().id; clearResult(); return; }
     if (t.closest(".sc-undo")) {
       const last = session.shift();
       if (!last) return;
@@ -421,7 +494,7 @@ export function openScanner(opts) {
   });
   root.addEventListener("change", (ev) => {
     const t = ev.target;
-    if (t.classList.contains("sc-lang")) { prefs.lang = t.value; savePrefs(); renderSummary(); if (result && !result.read?.lang) { result.lang = t.value; renderResult(); } }
+    if (t.classList.contains("sc-lang")) { prefs.lang = t.value; savePrefs(); renderSummary(); if (result && !result.read?.lang && !result.userLang) { result.lang = t.value; renderResult(); } }
     else if (t.classList.contains("sc-finish")) { prefs.finish = t.value; savePrefs(); renderSummary(); renderResult(); }
     else if (t.classList.contains("sc-auto")) { prefs.auto = t.checked; savePrefs(); renderSummary(); }
     else if (t.classList.contains("sc-cam")) { prefs.deviceId = t.value; savePrefs(); startCamera(t.value); }
@@ -443,14 +516,17 @@ export function openScanner(opts) {
 
   // ---------- arranque ----------
   (async () => {
+    // El lector de texto (varios MB la primera vez) se carga en paralelo con las huellas y la cámara.
+    loadTesseract().then((w) => { worker = w; }).catch((e) => setStatus(`${e.message}. Se reconocerá solo por la imagen.`, "err"));
+    startCamera(prefs.deviceId);
     try {
       fps = await loadFingerprints(opts.fingerprintsUrl);
     } catch (err) {
       setStatus(err.message, "err");
       return;
     }
-    loadTesseract().then((w) => { worker = w; }).catch((e) => setStatus(`${e.message}. Se reconocerá solo por la imagen.`, "err"));
-    startCamera(prefs.deviceId);
+    visualLoop();
+    ocrLoop();
   })();
 
   return { close };

@@ -290,3 +290,7 @@ a.ext,.langs a,.railfoot a{color:var(--brass)}
 .sc-result:not([hidden]) ~ .sc-settings{order:2}
 .scanner:has(.sc-result:not([hidden])) .sc-hint{display:none}
 @media (max-width:899px){.sc-panel{max-height:52dvh}}
+/* Escáner: botón de orientación y aviso de carta nueva */
+.sc-orient{width:auto;padding:0 12px;border-radius:21px;display:flex;gap:6px;font-size:12px;font-weight:700}
+.sc-new{margin:0;font-size:12px;font-weight:700;color:var(--brass,#e2b24f)}
+@media (prefers-reduced-motion:no-preference){.sc-guide{transition:width .2s,height .2s,left .2s,top .2s}}

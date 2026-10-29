@@ -9,7 +9,7 @@
 // - stamp: gris en 12×5 de la zona del sello (abajo en el centro). Es lo único que cambia
 //   entre una carta normal y su promo (logo de Nexus Night, del evento…); sirve para desempatar.
 
-export const FP_VERSION = 2;
+export const FP_VERSION = 3; // 3: campos de batalla en horizontal
 export const FP_W = 96;
 export const FP_H = 134; // proporción de la carta: 744 × 1039
 const INSET = 0.04; // ignora el borde exterior (la cámara rara vez encuadra justo)
@@ -83,7 +83,8 @@ function normalized(arr) {
 export function distance(a, b) {
   let ham = 0;
   for (let i = 0; i < 32; i++) ham += POP[a.hash[i] ^ b.hash[i]];
-  const ca = normalized(a.color), cb = normalized(b.color);
+  // El color normalizado se guarda en la propia huella: así buscar entre 1.600 cartas es rápido.
+  const ca = (a.nc ||= normalized(a.color)), cb = (b.nc ||= normalized(b.color));
   let cd = 0;
   for (let i = 0; i < 48; i++) cd += Math.abs(ca[i] - cb[i]);
   return (ham / 256) * 0.6 + Math.min(1, cd / 48) * 0.4;

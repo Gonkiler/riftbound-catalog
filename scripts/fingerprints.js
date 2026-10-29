@@ -43,8 +43,13 @@ async function work() {
       }
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const buf = Buffer.from(await res.arrayBuffer());
-      const { data, info } = await sharp(buf).resize(FP_W, FP_H, { fit: "fill" }).removeAlpha().raw().toBuffer({ resolveWithObject: true });
-      out.cards[id] = { img, fp: encode(fingerprint(data, info.width, info.height, info.channels)) };
+      // Los campos de batalla son horizontales: su huella se calcula en apaisado (FP_H × FP_W)
+      // y el escáner la compara con un encuadre horizontal ("o": "l").
+      const meta = await sharp(buf).metadata();
+      const landscape = meta.width > meta.height;
+      const [w, h] = landscape ? [FP_H, FP_W] : [FP_W, FP_H];
+      const { data, info } = await sharp(buf).resize(w, h, { fit: "fill" }).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+      out.cards[id] = { img, fp: encode(fingerprint(data, info.width, info.height, info.channels)), ...(landscape ? { o: "l" } : {}) };
     } catch (err) {
       failed.push(`${id}: ${err.message}`);
     }
