@@ -29,7 +29,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      # El build solo usa módulos de Node: no hace falta npm install.
+      # sharp (dependencia de desarrollo) hace falta para las huellas del escáner.
+      - run: npm ci
+      # Huellas de imagen de las cartas nuevas (reutiliza las de data/fingerprints.json).
+      - run: node scripts/fingerprints.js
       - run: node scripts/build-static.js
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

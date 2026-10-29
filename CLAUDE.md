@@ -10,10 +10,11 @@ Notas para Claude Code sobre este repositorio. El README es para personas; este 
 
 ## Stack
 
-- Node.js ≥ 22.13, ESM (`"type": "module"`). Dependencias: Express y `@libsql/client`.
+- Node.js ≥ 22.13, ESM (`"type": "module"`). Dependencias: Express y `@libsql/client`. De desarrollo: `sharp` (huellas del escáner) y `tesseract.js` (pruebas del OCR).
 - Base de datos: libSQL. Con `TURSO_DATABASE_URL` + `TURSO_AUTH_TOKEN` usa Turso (producción); sin ellas, el archivo local `DB_PATH` (`data/coleccion.db`). La API del cliente es asíncrona; las escrituras de varias filas van en `db.batch(..., "write")`, que es atómico.
 - Despliegue: `render.yaml` (Blueprint de Render). El disco de Render gratuito no persiste: no guardes nada que importe en archivos (la caché de precios en `data/cache/` sí puede perderse). Render define `RENDER=true` y con eso se activa `trust proxy` (cookie `secure`).
-- Frontend sin frameworks ni build: `public/index.html`, `public/styles.css`, `public/app.js`. No añadas un bundler salvo que se pida.
+- Frontend sin frameworks ni build: `public/index.html`, `public/styles.css`, `public/app.js` (script clásico). El escáner son módulos ES que `app.js` carga con `import()` al pulsar Escanear: `public/scanner.js` (cámara e interfaz), `public/scan-core.js` (OCR: preparar la franja, `parseCode`, candidatas) y `public/fingerprint.js` (huella de imagen). Tesseract.js se carga de jsDelivr solo al abrir el escáner. No añadas un bundler salvo que se pida.
+- Diseño: primero el móvil (barra superior fija, filtros en una fila deslizable, barra inferior `.bnav`, hojas que suben desde abajo); a partir de 900px, barra lateral `.rail`. Se desplaza la página, no un panel interior. La cuadrícula se pinta en tandas de `CHUNK` con un `IntersectionObserver`; al cambiar copias se repinta solo esa tarjeta (`refreshCard`).
 
 ## Modo estático (GitHub Pages)
 
@@ -43,6 +44,13 @@ Notas para Claude Code sobre este repositorio. El README es para personas; este 
 - `scripts/import-collection.js`: importa copias desde JSON. `data/seed/coleccion-inicial.json` es lo que Gonchu ya había apuntado en la versión de claude.ai.
 - `scripts/check.js`: comprobaciones con `node:assert`, incluida la base de datos sobre un archivo temporal. No hay framework de tests.
 - `public/app.js`: el estado de la vista vive en la URL (`#<set>?ver=tengo|faltan|repetidas&rareza=rare,epic&q=…&carta=<id>`; `#todas` = todas las colecciones). `syncUrl` la escribe y `route` la lee. Los cambios de colección añaden entrada al historial; los filtros la sustituyen.
+
+## Escáner
+
+- Línea impresa abajo a la izquierda: `SET • NNN/TOTAL • IDIOMA` (el idioma solo en colecciones recientes; Origins/Unleashed EN no lo llevan). Runas `R01`, fichas `T01`, variantes `061a`, firmadas `303*`. `parseCode` corrige confusiones típicas (O/0, I/1…) y valida la colección.
+- `baseKey(code)` agrupa una carta con sus promos/variantes (`OGN-001-P` → `OGN-001`). Entre varias candidatas decide la huella; si normal y promo son casi iguales (imágenes de referencia idénticas salvo el sello), `rankCandidates` marca `ambiguous`, pone primero la normal y la interfaz pregunta.
+- Huellas: `scripts/fingerprints.js` → `data/fingerprints.json` (dHash 256 bits + color 4×4 + zona del sello). El CDN de Riot da 403 a peticiones con `Origin`, así que no se pueden calcular en el navegador. Si cambias `fingerprint.js`, sube `FP_VERSION` y regenera. dotgg rechaza un User-Agent con caracteres no ASCII.
+- Resultados con fotos simuladas (80 cartas): número leído ~68 %, carta correcta solo por imagen ~92 % (top-5: 100 %). Sin probar con cámaras reales.
 
 ## Datos
 

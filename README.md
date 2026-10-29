@@ -10,7 +10,25 @@ Colecciones incluidas: Origins, Proving Grounds, Spiritforged, Unleashed, Vendet
 - Cuadrícula de cartas con imagen, rareza, número y copias. Filtros **Todas / Las tengo / Me faltan / Repetidas**, por rareza y buscador por nombre o número.
 - Ficha de cada carta con sus datos, las copias por idioma y el precio de Cardmarket (se pide solo al abrirla).
 - **Compartir:** cada vista y cada carta tienen su propio enlace, filtros incluidos (p. ej. `/#todas?ver=repetidas`). El botón *Compartir* copia el enlace (en el móvil abre el menú de compartir) y *Copiar lista* copia las cartas que se ven como texto, listo para pegar en WhatsApp o Discord.
-- **Edición con contraseña.** Quien no la tiene solo puede mirar.
+- **Edición con contraseña** (o token de GitHub en GitHub Pages). Quien no la tiene solo puede mirar.
+- **Escáner con la cámara** (ver abajo).
+- Pensada para el móvil: barra inferior con Colecciones, Escanear, Copiar lista y Editar; la ficha de cada carta sube desde abajo.
+
+## Escáner de cartas
+
+El botón **Escanear** abre la cámara: la trasera en el móvil y, en el ordenador, la que haya (si hay varias, se elige en *Ajustes*). Si no hay cámara, *Usar una foto* analiza una imagen.
+
+Cómo reconoce la carta:
+
+1. Lee con OCR la línea de abajo a la izquierda, p. ej. `RAD • 138/167 • EN`: colección, número y, en las colecciones que lo imprimen, el **idioma**. Si la carta no trae idioma impreso (Origins, Unleashed), usa el idioma elegido en *Ajustes*.
+2. Compara la imagen con la **huella** de todas las cartas (`data/fingerprints.json`). Sirve para elegir entre la normal, la **promo** o una variante con el mismo número, y para reconocer la carta aunque el número no se lea.
+3. Cuando la normal y la promo se ven casi iguales (solo cambia el sello de abajo), propone la normal y pregunta.
+
+Con la sesión iniciada, *Añadir* suma una copia del idioma y acabado elegidos. *Añadir al detectar* lo hace sin preguntar, para pasar un montón de cartas seguidas.
+
+Consejos: buena luz, sin reflejos, y la carta llenando el marco con la línea del número dentro de la zona punteada.
+
+Las huellas se generan con `npm run fingerprints` (necesita `npm install`, que incluye `sharp`). El flujo de GitHub Pages calcula solo las de cartas nuevas al publicar.
 
 ## Publicarla en GitHub Pages (gratis, sin servidor)
 
@@ -79,6 +97,7 @@ Para desarrollo, `npm run dev` reinicia el servidor al guardar cambios.
 | `npm run sync` | Vuelve a descargar el catálogo de cartas y los ids de Cardmarket (úsalo cuando salga una colección nueva). |
 | `npm run import [archivo]` | Importa copias desde un JSON (por defecto `data/seed/coleccion-inicial.json`) en la base que diga `.env`. |
 | `npm run build` | Genera la versión estática para GitHub Pages en `dist/`. |
+| `npm run fingerprints` | Calcula las huellas de imagen del escáner (solo las cartas nuevas o con imagen cambiada). |
 | `npm run check` | Comprobaciones del catálogo, la validación y la base de datos. |
 
 ## Precios de Cardmarket

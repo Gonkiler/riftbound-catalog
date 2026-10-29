@@ -25,6 +25,26 @@ const extra = JSON.parse(readFileSync("data/cards-extra.json", "utf8")).cards;
 const catalogIds = new Set(catalog.cards.map((r) => r[0]));
 for (const e of extra) assert.ok(catalogIds.has(e.id), `${e.id} está en cards-extra.json pero no en el catálogo: ejecuta npm run sync`);
 
+// Escáner: huellas de imagen y lectura del número impreso
+const fpFile = JSON.parse(readFileSync("data/fingerprints.json", "utf8"));
+const { FP_VERSION } = await import("../public/fingerprint.js");
+assert.equal(fpFile.version, FP_VERSION, "las huellas son de otra versión: ejecuta npm run fingerprints");
+const sinHuella = catalog.cards.filter((r) => r[8] && !fpFile.cards[r[0]]).map((r) => r[0]);
+if (sinHuella.length) console.warn(`Aviso: ${sinHuella.length} cartas sin huella para el escáner (npm run fingerprints): ${sinHuella.slice(0, 5).join(", ")}…`);
+const { parseCode, baseKey } = await import("../public/scan-core.js");
+const knownSets = new Set(["OGN", "OGS", "SFD", "UNL", "VEN", "RAD"]);
+const read = (t) => { const r = parseCode(t, knownSets); return r && `${r.set}-${r.num}${r.lang ? " " + r.lang : ""}`; };
+assert.equal(read("RAD • 138/167 • EN"), "RAD-138 EN");
+assert.equal(read("RAD * 104/167 * EN BI"), "RAD-104 EN");
+assert.equal(read("OGN • 303*/298"), "OGN-303*");
+assert.equal(read("0GN 001/298"), "OGN-001");
+assert.equal(read("RAD • R01b • EN"), "RAD-R01B EN");
+assert.equal(read("SFD • T01"), "SFD-T01");
+assert.equal(read("RAD • 061a/167 • FR"), "RAD-061A FR");
+assert.equal(baseKey("OGN-001-P"), "OGN-001");
+assert.equal(baseKey("RAD-R01b-P"), "RAD-R01B");
+assert.equal(baseKey("OGN-299*/298"), "OGN-299*");
+
 // Validación de copias
 assert.deepEqual(cleanLangs({ EN: { n: 2 } }), { EN: { n: 2, f: 0, p: 0 } });
 assert.throws(() => cleanLangs({ XX: { n: 1 } }), /Idioma desconocido/);

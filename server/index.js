@@ -28,6 +28,13 @@ app.get("/api/cards", (_req, res) => {
   res.type("json").set("Cache-Control", "public, max-age=3600").send(catalogJson);
 });
 
+// Huellas de imagen para el escáner (npm run fingerprints). Solo se pide al abrir el escáner.
+app.get("/api/fingerprints", (_req, res) => {
+  res.set("Cache-Control", "public, max-age=3600").sendFile("data/fingerprints.json", { root: process.cwd() }, (err) => {
+    if (err && !res.headersSent) res.status(404).json({ error: "Faltan las huellas del escáner: ejecuta npm run fingerprints." });
+  });
+});
+
 app.get("/api/collection", wrap(async (_req, res) => res.json(await getCollection())));
 
 app.put("/api/collection/:cardId", requireAdmin, wrap(async (req, res) => {

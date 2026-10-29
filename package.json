@@ -13,10 +13,15 @@
     "sync": "node scripts/sync-cards.js",
     "import": "node --env-file-if-exists=.env scripts/import-collection.js",
     "check": "node scripts/check.js",
-    "build": "node scripts/build-static.js"
+    "build": "node scripts/build-static.js",
+    "fingerprints": "node scripts/fingerprints.js"
   },
   "dependencies": {
     "@libsql/client": "^0.18.0",
     "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "sharp": "^0.33.5",
+    "tesseract.js": "^5.1.1"
   }
 }

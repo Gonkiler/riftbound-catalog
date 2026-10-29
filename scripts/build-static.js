@@ -23,6 +23,8 @@ cpSync("public", OUT, { recursive: true });
 const owner = ownerName();
 writeFileSync(`${OUT}/index.html`, renderIndex(owner));
 cpSync("data/cards.json", `${OUT}/data/cards.json`);
+// Huellas de imagen para el escáner (las genera npm run fingerprints y se guardan en el repo).
+cpSync("data/fingerprints.json", `${OUT}/data/fingerprints.json`);
 
 // La colección se valida al publicar: si alguien la rompe a mano, el despliegue falla en vez de publicar basura.
 const collection = JSON.parse(readFileSync("data/collection.json", "utf8"));
