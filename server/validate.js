@@ -1,4 +1,4 @@
-import { LANGUAGES } from "./catalog.js";
+import { LANGUAGES, cardIds } from "./catalog.js";
 
 const MAX_COPIES = 999;
 
@@ -22,4 +22,19 @@ export function cleanLangs(body) {
     out[lang] = counts;
   }
   return out;
+}
+
+/**
+ * Valida una colección entera ({ cardId: { EN: {...} } }) y devuelve { cards, skipped }.
+ * Las cartas que no están en el catálogo se saltan; los errores de formato lanzan.
+ */
+export function cleanCollection(input) {
+  if (!input || typeof input !== "object" || Array.isArray(input)) throw new Error("La colección debe ser un objeto por carta.");
+  const cards = {};
+  const skipped = [];
+  for (const [id, langs] of Object.entries(input)) {
+    if (!cardIds.has(id)) skipped.push(id);
+    else cards[id] = cleanLangs(langs);
+  }
+  return { cards, skipped };
 }

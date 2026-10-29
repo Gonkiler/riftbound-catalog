@@ -3,47 +3,69 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Archivo Riftbound</title>
+  <title>%TITLE%</title>
+  <meta name="description" content="%DESCRIPTION%">
+  <!-- Vista previa al pegar el enlace en WhatsApp, Discord, Telegram… (el servidor rellena título y descripción) -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="%TITLE%">
+  <meta property="og:description" content="%DESCRIPTION%">
+  <meta property="og:image" content="https://cmsassets.rgpub.io/sanity/images/dsfx7636/game_data_live/15ed971e4029a92b362a81ccadf309fb81e40b81-744x1039.png?w=600&amp;auto=format">
+  <meta name="twitter:card" content="summary">
+  <meta name="theme-color" content="#12151f">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://cmsassets.rgpub.io">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Barlow:wght@400;500;600;700&display=swap">
-  <link rel="stylesheet" href="/styles.css">
-  <script src="/app.js" defer></script>
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
 </head>
 <body>
 <div class="app">
   <nav class="rail" aria-label="Colecciones">
-    <div class="brand">Archivo Riftbound<small>Catálogo personal</small></div>
+    <div class="brand">Archivo Riftbound<small id="brandSub">Catálogo de cartas</small></div>
     <div class="setgroup"><h2>Colecciones</h2><ul class="setlist" id="mainSets"></ul></div>
     <div class="setgroup"><h2>Promos Nexus Night</h2><ul class="setlist" id="nnSets"></ul></div>
     <div class="railfoot" id="railFoot">Cargando cartas…</div>
   </nav>
   <main id="main">
-    <header class="head">
+    <header class="head" id="head">
+      <div class="mbrand" id="mBrand">Archivo Riftbound</div>
       <div class="titlerow">
         <h1 id="setTitle">Cargando…</h1>
         <div class="stats">
-          <div class="stat"><b id="stUnique">–</b><span>Cartas distintas</span></div>
+          <div class="stat"><b id="stUnique">–</b><span>Distintas</span></div>
           <div class="stat"><b id="stCopies">–</b><span>Copias</span></div>
           <div class="stat"><b id="stFoil">–</b><span>Foil</span></div>
+          <div class="stat"><b id="stDup">–</b><span>Repetidas</span></div>
         </div>
       </div>
       <div class="tools">
-        <input class="search" id="q" type="search" placeholder="Buscar por nombre o número" aria-label="Buscar carta">
+        <input class="search" id="q" type="search" placeholder="Buscar por nombre o número" aria-label="Buscar carta" autocomplete="off">
         <div class="seg" role="group" aria-label="Mostrar">
           <button type="button" data-own="all" aria-pressed="true">Todas</button>
           <button type="button" data-own="have" aria-pressed="false">Las tengo</button>
           <button type="button" data-own="miss" aria-pressed="false">Me faltan</button>
+          <button type="button" data-own="dup" aria-pressed="false" title="Cartas de las que hay más de una copia">Repetidas</button>
         </div>
-        <div id="rarChips" class="tools"></div>
-        <button type="button" class="adminbtn" id="adminBtn" hidden aria-pressed="false">Modo administrador</button>
-        <button type="button" class="logout" id="logoutBtn" hidden>Cerrar sesión</button>
+        <div class="actions">
+          <button type="button" class="act" id="shareBtn" title="Enlace a esta vista, con los filtros puestos">
+            <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1-1a2.8 2.8 0 014 4l-1 1M9 11.5l-1 1a2.8 2.8 0 01-4-4l1-1" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Compartir
+          </button>
+          <button type="button" class="act" id="copyBtn" title="Copia las cartas que se ven ahora como texto, para pegarlas en un chat">
+            <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><rect x="5" y="5" width="8.5" height="8.5" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3 10.5V3.8C3 3.3 3.3 3 3.8 3h6.7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Copiar lista
+          </button>
+          <button type="button" class="adminbtn" id="adminBtn" hidden aria-pressed="false">Editar</button>
+          <button type="button" class="logout" id="logoutBtn" hidden>Cerrar sesión</button>
+        </div>
       </div>
+      <div class="chips" id="rarChips"></div>
       <div class="notice" id="notice" hidden></div>
     </header>
     <section class="grid" id="grid" aria-live="polite"></section>
   </main>
 </div>
 <div class="scrim" id="scrim" hidden></div>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 </body>
 </html>
