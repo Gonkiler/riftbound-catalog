@@ -80,6 +80,76 @@ for (const e of extraUsed) {
   if (e.cmId) ids[e.id] = { cmId: Number(e.cmId), url: e.cmUrl || null, snapshot: {} };
 }
 
+// ---------- Enlazar por nombre las cartas que tienen enlace a Cardmarket pero no producto ----------
+// Pasa con muchas promos (Nexus Night…): el tracker sabe la página de Cardmarket pero no el id de
+// producto, y sin id no hay precio. El catálogo de productos de Cardmarket da nombre y expansión;
+// se enlaza solo cuando el nombre es único en su expansión, para no asignar un precio equivocado.
+const PRODUCTS_URL = "https://downloads.s3.cardmarket.com/productCatalog/productList/products_singles_22.json";
+const linkReport = { linked: 0, ambiguous: [], notFound: [] };
+try {
+  const products = (await getJson(PRODUCTS_URL)).products;
+  const prodById = new Map(products.map((p) => [p.idProduct, p]));
+  const norm = (s) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
+  const slugOf = (url) => url?.split("/Singles/")[1]?.split("/")[0] || null;
+  const used = new Set(Object.values(ids).map((v) => v.cmId).filter(Boolean));
+  const byId = Object.fromEntries(cards.map((r) => [r[0], r]));
+  const fullName = (r) => norm(r[2] ? `${r[1]} ${r[2]}` : r[1]);
+
+  // Expansiones de las colecciones normales (no promo): una promo nunca se enlaza ahí, porque
+  // allí está la carta normal, con otro precio.
+  const isPromo = (r) => r[4].endsWith("-NN") || r[9].includes("promo");
+  const mainExps = new Set();
+  for (const [id, v] of Object.entries(ids)) {
+    const exp = v.cmId && prodById.get(v.cmId)?.idExpansion;
+    if (exp && byId[id] && !isPromo(byId[id])) mainExps.add(exp);
+  }
+  const promoProducts = products.filter((p) => !mainExps.has(p.idExpansion));
+  // Expansiones de cada página de Cardmarket ("Spiritforged-Promos"…), según las cartas ya enlazadas.
+  const expsOfSlug = {};
+  for (const v of Object.values(ids)) {
+    const exp = v.cmId && prodById.get(v.cmId)?.idExpansion, slug = slugOf(v.url);
+    if (exp && slug && !mainExps.has(exp)) (expsOfSlug[slug] ||= new Set()).add(exp);
+  }
+  const todo = Object.entries(ids).filter(([id, v]) => !v.cmId && slugOf(v.url) && byId[id]);
+  // Páginas sin ninguna carta enlazada: la expansión que más nombres coincide.
+  for (const slug of new Set(todo.map(([, v]) => slugOf(v.url)))) {
+    if (expsOfSlug[slug]) continue;
+    const votes = {};
+    for (const [id, v] of todo) {
+      if (slugOf(v.url) !== slug) continue;
+      const exps = new Set(promoProducts.filter((p) => norm(p.name) === fullName(byId[id])).map((p) => p.idExpansion));
+      for (const e of exps) votes[e] = (votes[e] || 0) + 1;
+    }
+    const best = Object.entries(votes).sort((a, b) => b[1] - a[1])[0];
+    if (best && best[1] >= 3) expsOfSlug[slug] = new Set([Number(best[0])]);
+  }
+
+  const match = (pool, r) => {
+    let c = pool.filter((p) => norm(p.name) === fullName(r));
+    if (!c.length && r[2]) c = pool.filter((p) => norm(p.name) === norm(r[1])); // producto sin subtítulo
+    return c;
+  };
+  for (const [id, v] of todo) {
+    const r = byId[id], exps = expsOfSlug[slugOf(v.url)];
+    if (!isPromo(r)) { linkReport.notFound.push(id); continue; }
+    const free = promoProducts.filter((p) => !used.has(p.idProduct));
+    // Primero en la expansión de su página; si no está, en el resto de expansiones de promos
+    // (Cardmarket agrupa algunas promos en otra, p. ej. las de Proving Grounds con las de Origins).
+    let cands = exps ? match(free.filter((p) => exps.has(p.idExpansion)), r) : [];
+    if (!cands.length) cands = match(free, r);
+    if (cands.length === 1) {
+      v.cmId = cands[0].idProduct;
+      used.add(v.cmId);
+      linkReport.linked++;
+    } else (cands.length ? linkReport.ambiguous : linkReport.notFound).push(id);
+  }
+  console.log(`Enlazadas con Cardmarket por nombre: ${linkReport.linked}. Ambiguas (varios productos con el mismo nombre): ${linkReport.ambiguous.length}. Sin producto: ${linkReport.notFound.length}.`);
+  if (linkReport.ambiguous.length) console.log(`  Ambiguas: ${linkReport.ambiguous.join(", ")}`);
+  if (linkReport.notFound.length) console.log(`  Sin producto: ${linkReport.notFound.join(", ")}`);
+} catch (err) {
+  console.warn(`No se ha podido enlazar por nombre con Cardmarket: ${err.message}`);
+}
+
 await mkdir("data", { recursive: true });
 await writeFile(
   "data/cards.json",
