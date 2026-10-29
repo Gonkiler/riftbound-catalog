@@ -171,14 +171,16 @@ function commitMessage(before, batch) {
   return `Colección: ${parts.slice(0, 4).join("; ")}${parts.length > 4 ? ` y ${parts.length - 4} más` : ""}`;
 }
 
-// Los cambios se juntan un momento y se guardan en un solo commit.
+// Los cambios se juntan y se guardan en un solo commit cuando pasan 5 s sin tocar nada
+// (cada commit vuelve a publicar la web, así el historial no se llena de commits sueltos).
+const SAVE_DELAY_MS = 5000;
 const ghQueue = { pending: {}, waiters: [], timer: null, running: false };
 function ghSave(id, langs) {
   ghQueue.pending[id] = structuredClone(langs);
   return new Promise((resolve, reject) => {
     ghQueue.waiters.push({ resolve, reject });
     clearTimeout(ghQueue.timer);
-    ghQueue.timer = setTimeout(ghFlush, 1500);
+    ghQueue.timer = setTimeout(ghFlush, SAVE_DELAY_MS);
   });
 }
 async function ghFlush() {

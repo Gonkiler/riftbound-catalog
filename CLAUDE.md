@@ -19,7 +19,7 @@ Notas para Claude Code sobre este repositorio. El README es para personas; este 
 
 - `scripts/build-static.js` (`npm run build`) genera `dist/`: copia `public/`, rellena `index.html`, y publica `data/cards.json`, `data/collection.json`, `data/prices.json` (precios de todas las cartas, descargados en el build porque la guía de Cardmarket no tiene CORS) y `static.json` (`{ repo, branch, owner }`).
 - `.github/workflows/pages.yml` lo ejecuta en cada push a `main`, cada día (precios) y a mano.
-- La colección es `data/collection.json` en el repo: una carta por línea, ordenadas, sin idiomas a cero. Para editar, la web usa un token fine-grained de GitHub guardado en `localStorage` (`rb_github_token`) y hace commits con la API de contenidos (`backend` en `app.js`: junta los cambios ~1,5 s en un commit y reintenta si cambió el `sha`).
+- La colección es `data/collection.json` en el repo: una carta por línea, ordenadas, sin idiomas a cero. Para editar, la web usa un token fine-grained de GitHub guardado en `localStorage` (`rb_github_token`) y hace commits con la API de contenidos (`backend` en `app.js`: junta los cambios en un commit cuando pasan `SAVE_DELAY_MS` (5 s) sin tocar nada y reintenta si cambió el `sha`).
 - Rutas relativas en `index.html` y `app.js` (Pages sirve en `/<repo>/`). No uses rutas que empiecen por `/`.
 - El nombre del dueño sale de `data/site.json` (o de `OWNER_NAME`). Lo lee `server/page.js`, compartido por el servidor y el build.
 
