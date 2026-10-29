@@ -11,7 +11,7 @@ import { readFile, writeFile, mkdir } from "node:fs/promises";
 const SRC = "https://raw.githubusercontent.com/Goodplayer01/riftbound-tracker/main/public";
 
 // Orden de la barra lateral. Una colección nueva que no esté aquí se añade al final.
-const SET_ORDER = ["OGN", "OGS", "SFD", "UNL", "VEN", "RAD", "OGN-NN", "SFD-NN", "UNL-NN", "VEN-NN"];
+const SET_ORDER = ["OGN", "OGS", "SFD", "UNL", "VEN", "RAD", "OGN-NN", "SFD-NN", "UNL-NN", "VEN-NN", "RAD-NN"];
 const KEEP_TAGS = new Set(["promo", "overnumbered", "alt", "signed", "nexus-night", "ultimate", "release"]);
 const ID_RE = /^[A-Za-z0-9_\-.~:@+]+$/;
 
@@ -28,8 +28,11 @@ function naturalKey(code) {
 
 const [cardsSrc, pricesSrc] = await Promise.all([getJson(`${SRC}/cards.json`), getJson(`${SRC}/prices.json`)]);
 
-const order = [...SET_ORDER, ...Object.keys(cardsSrc.sets).filter((s) => !SET_ORDER.includes(s))];
-const sets = order.filter((id) => cardsSrc.sets[id]).map((id) => ({ id, name: cardsSrc.sets[id] }));
+// Cartas y colecciones añadidas a mano (data/cards-extra.json).
+const extraFile = JSON.parse(await readFile("data/cards-extra.json", "utf8"));
+const setNames = { ...(extraFile.sets || {}), ...cardsSrc.sets };
+const order = [...SET_ORDER, ...Object.keys(setNames).filter((s) => !SET_ORDER.includes(s))];
+const sets = order.filter((id) => setNames[id]).map((id) => ({ id, name: setNames[id] }));
 
 const cards = [];
 for (const c of cardsSrc.cards) {
@@ -48,7 +51,7 @@ for (const c of cardsSrc.cards) {
   ]);
 }
 // Cartas añadidas a mano (data/cards-extra.json): solo las que el tracker aún no trae.
-const extra = JSON.parse(await readFile("data/cards-extra.json", "utf8")).cards;
+const extra = extraFile.cards;
 const trackerIds = new Set(cards.map((r) => r[0]));
 const trackerCodes = new Set(cards.map((r) => r[3].toUpperCase()));
 const extraUsed = [];

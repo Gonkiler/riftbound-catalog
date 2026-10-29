@@ -2,46 +2,721 @@
   "_comment": "Cartas que le faltan al tracker (Goodplayer01/riftbound-tracker). scripts/sync-cards.js las añade al catálogo y deja de usarlas en cuanto el tracker las trae con el mismo id. img vacío = la web muestra el marcador con el nombre.",
   "cards": [
     {
-      "id": "rad-r01", "name": "Fury Rune", "code": "RAD-R01", "set": "RAD", "rarity": "Common", "type": "Rune", "domains": "Fury",
+      "id": "rad-r01",
+      "name": "Fury Rune",
+      "code": "RAD-R01",
+      "set": "RAD",
+      "rarity": "Common",
+      "type": "Rune",
+      "domains": "Fury",
       "img": "https://cmsassets.rgpub.io/sanity/images/dsfx7636/game_data_live/e0337944fa56c357ab3b9a822064a8f58ead8315-744x1039.png",
-      "cmId": 917446, "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Radiance/Fury-Rune-V1-Common",
+      "cmId": 917446,
+      "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Radiance/Fury-Rune-V1-Common",
       "source": "Galería oficial (playriftbound.com)"
     },
     {
-      "id": "rad-r06", "name": "Order Rune", "code": "RAD-R06", "set": "RAD", "rarity": "Common", "type": "Rune", "domains": "Order",
+      "id": "rad-r06",
+      "name": "Order Rune",
+      "code": "RAD-R06",
+      "set": "RAD",
+      "rarity": "Common",
+      "type": "Rune",
+      "domains": "Order",
       "img": "https://cmsassets.rgpub.io/sanity/images/dsfx7636/game_data_live/402fa10965dbee64aa1ddef654e4b9d9a5ccd28e-744x1039.png",
-      "cmId": 917456, "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Radiance/Order-Rune-V1-Common",
+      "cmId": 917456,
+      "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Radiance/Order-Rune-V1-Common",
       "source": "Galería oficial (playriftbound.com)"
     },
     {
-      "id": "rad-t-mech", "name": "Mech", "code": "RAD-T-MECH", "set": "RAD", "rarity": "Common", "type": "Token", "domains": "Colorless", "img": "",
-      "cmId": 917492, "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Radiance/Mech",
+      "id": "rad-t-mech",
+      "name": "Mech",
+      "code": "RAD-T-MECH",
+      "set": "RAD",
+      "rarity": "Common",
+      "type": "Token",
+      "domains": "Colorless",
+      "img": "",
+      "cmId": 917492,
+      "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Radiance/Mech",
       "source": "Cardmarket (sin número de colección conocido)"
     },
     {
-      "id": "rad-t-bird", "name": "Bird", "code": "RAD-T-BIRD", "set": "RAD", "rarity": "Common", "type": "Token", "domains": "Colorless", "img": "",
-      "cmId": 917614, "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Radiance/Bird",
+      "id": "rad-t-bird",
+      "name": "Bird",
+      "code": "RAD-T-BIRD",
+      "set": "RAD",
+      "rarity": "Common",
+      "type": "Token",
+      "domains": "Colorless",
+      "img": "",
+      "cmId": 917614,
+      "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Radiance/Bird",
       "source": "Cardmarket (sin número de colección conocido)"
     },
     {
-      "id": "rad-t-empowered", "name": "Empowered", "code": "RAD-T-EMPOWERED", "set": "RAD", "rarity": "Common", "type": "Token", "domains": "Colorless", "img": "",
-      "cmId": 917615, "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Radiance/Empowered",
+      "id": "rad-t-empowered",
+      "name": "Empowered",
+      "code": "RAD-T-EMPOWERED",
+      "set": "RAD",
+      "rarity": "Common",
+      "type": "Token",
+      "domains": "Colorless",
+      "img": "",
+      "cmId": 917615,
+      "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Radiance/Empowered",
       "source": "Cardmarket (sin número de colección conocido)"
     },
     {
-      "id": "rad-t-buff", "name": "Buff", "code": "RAD-T-BUFF", "set": "RAD", "rarity": "Common", "type": "Token", "domains": "Colorless", "img": "",
-      "cmId": 917616, "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Radiance/Buff",
+      "id": "rad-t-buff",
+      "name": "Buff",
+      "code": "RAD-T-BUFF",
+      "set": "RAD",
+      "rarity": "Common",
+      "type": "Token",
+      "domains": "Colorless",
+      "img": "",
+      "cmId": 917616,
+      "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Radiance/Buff",
       "source": "Cardmarket (sin número de colección conocido)"
     },
     {
-      "id": "rad-t-recruit", "name": "Recruit", "code": "RAD-T-RECRUIT", "set": "RAD", "rarity": "Common", "type": "Token", "domains": "Colorless", "img": "",
-      "cmId": 917617, "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Radiance/Recruit",
+      "id": "rad-t-recruit",
+      "name": "Recruit",
+      "code": "RAD-T-RECRUIT",
+      "set": "RAD",
+      "rarity": "Common",
+      "type": "Token",
+      "domains": "Colorless",
+      "img": "",
+      "cmId": 917617,
+      "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Radiance/Recruit",
       "source": "Cardmarket (sin número de colección conocido)"
     },
     {
-      "id": "ven-t-mech", "name": "Mech", "code": "VEN-T-MECH", "set": "VEN", "rarity": "Common", "type": "Token", "domains": "Colorless", "img": "",
-      "cmId": 899230, "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Vendetta/Mech",
+      "id": "ven-t-mech",
+      "name": "Mech",
+      "code": "VEN-T-MECH",
+      "set": "VEN",
+      "rarity": "Common",
+      "type": "Token",
+      "domains": "Colorless",
+      "img": "",
+      "cmId": 899230,
+      "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Vendetta/Mech",
       "source": "Cardmarket (sin número de colección conocido)"
+    },
+    {
+      "id": "rad-132-p",
+      "name": "Heimerdinger",
+      "sub": "Academy Instructor",
+      "code": "RAD-132-P",
+      "set": "RAD-NN",
+      "rarity": "Showcase",
+      "type": "Unit",
+      "domains": "Order",
+      "img": "https://static.dotgg.gg/riftbound/cards/RAD-132-P.webp",
+      "tags": [
+        "promo",
+        "nexus-night"
+      ],
+      "cmId": 917392,
+      "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Radiance-Promos/Heimerdinger-Academy-Instructor",
+      "source": "Cardmarket + imagen de dotgg.gg"
+    },
+    {
+      "id": "rad-110-p",
+      "name": "Lulu",
+      "sub": "Whimsical",
+      "code": "RAD-110-P",
+      "set": "RAD-NN",
+      "rarity": "Showcase",
+      "type": "Unit",
+      "domains": "Chaos",
+      "img": "https://static.dotgg.gg/riftbound/cards/RAD-110-P.webp",
+      "tags": [
+        "promo",
+        "nexus-night"
+      ],
+      "cmId": 917607,
+      "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Radiance-Promos/Lulu-Whimsical",
+      "source": "Cardmarket + imagen de dotgg.gg"
+    },
+    {
+      "id": "rad-r01b-p",
+      "name": "Fury Rune",
+      "sub": "",
+      "code": "RAD-R01b-P",
+      "set": "RAD-NN",
+      "rarity": "Showcase",
+      "type": "Rune",
+      "domains": "Fury",
+      "img": "https://static.dotgg.gg/riftbound/cards/RAD-R01b-P.webp",
+      "tags": [
+        "promo",
+        "nexus-night"
+      ],
+      "cmId": 917608,
+      "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Radiance-Promos/Fury-Rune",
+      "source": "Cardmarket + imagen de dotgg.gg"
+    },
+    {
+      "id": "rad-r02b-p",
+      "name": "Calm Rune",
+      "sub": "",
+      "code": "RAD-R02b-P",
+      "set": "RAD-NN",
+      "rarity": "Showcase",
+      "type": "Rune",
+      "domains": "Calm",
+      "img": "https://static.dotgg.gg/riftbound/cards/RAD-R02b-P.webp",
+      "tags": [
+        "promo",
+        "nexus-night"
+      ],
+      "cmId": 917609,
+      "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Radiance-Promos/Calm-Rune",
+      "source": "Cardmarket + imagen de dotgg.gg"
+    },
+    {
+      "id": "rad-r03b-p",
+      "name": "Mind Rune",
+      "sub": "",
+      "code": "RAD-R03b-P",
+      "set": "RAD-NN",
+      "rarity": "Showcase",
+      "type": "Rune",
+      "domains": "Mind",
+      "img": "https://static.dotgg.gg/riftbound/cards/RAD-R03b-P.webp",
+      "tags": [
+        "promo",
+        "nexus-night"
+      ],
+      "cmId": 917610,
+      "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Radiance-Promos/Mind-Rune",
+      "source": "Cardmarket + imagen de dotgg.gg"
+    },
+    {
+      "id": "rad-r04b-p",
+      "name": "Body Rune",
+      "sub": "",
+      "code": "RAD-R04b-P",
+      "set": "RAD-NN",
+      "rarity": "Showcase",
+      "type": "Rune",
+      "domains": "Body",
+      "img": "https://static.dotgg.gg/riftbound/cards/RAD-R04b-P.webp",
+      "tags": [
+        "promo",
+        "nexus-night"
+      ],
+      "cmId": 917611,
+      "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Radiance-Promos/Body-Rune",
+      "source": "Cardmarket + imagen de dotgg.gg"
+    },
+    {
+      "id": "rad-r05b-p",
+      "name": "Chaos Rune",
+      "sub": "",
+      "code": "RAD-R05b-P",
+      "set": "RAD-NN",
+      "rarity": "Showcase",
+      "type": "Rune",
+      "domains": "Chaos",
+      "img": "https://static.dotgg.gg/riftbound/cards/RAD-R05b-P.webp",
+      "tags": [
+        "promo",
+        "nexus-night"
+      ],
+      "cmId": 917612,
+      "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Radiance-Promos/Chaos-Rune",
+      "source": "Cardmarket + imagen de dotgg.gg"
+    },
+    {
+      "id": "rad-r06b-p",
+      "name": "Order Rune",
+      "sub": "",
+      "code": "RAD-R06b-P",
+      "set": "RAD-NN",
+      "rarity": "Showcase",
+      "type": "Rune",
+      "domains": "Order",
+      "img": "https://static.dotgg.gg/riftbound/cards/RAD-R06b-P.webp",
+      "tags": [
+        "promo",
+        "nexus-night"
+      ],
+      "cmId": 917613,
+      "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Radiance-Promos/Order-Rune",
+      "source": "Cardmarket + imagen de dotgg.gg"
+    },
+    {
+      "id": "rad-002-p",
+      "name": "Banner of Conquest",
+      "sub": "",
+      "code": "RAD-002-P",
+      "set": "RAD-NN",
+      "rarity": "Showcase",
+      "type": "Gear",
+      "domains": "Fury",
+      "img": "https://static.dotgg.gg/riftbound/cards/RAD-002-P.webp",
+      "tags": [
+        "promo",
+        "nexus-night"
+      ],
+      "cmId": 917623,
+      "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Radiance-Promos/Banner-of-Conquest",
+      "source": "Cardmarket + imagen de dotgg.gg"
+    },
+    {
+      "id": "rad-008-p",
+      "name": "War Scout",
+      "sub": "",
+      "code": "RAD-008-P",
+      "set": "RAD-NN",
+      "rarity": "Showcase",
+      "type": "Unit",
+      "domains": "Fury",
+      "img": "https://static.dotgg.gg/riftbound/cards/RAD-008-P.webp",
+      "tags": [
+        "promo",
+        "nexus-night"
+      ],
+      "cmId": 917624,
+      "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Radiance-Promos/War-Scout",
+      "source": "Cardmarket + imagen de dotgg.gg"
+    },
+    {
+      "id": "rad-014-p",
+      "name": "Shimmering Swimmer",
+      "sub": "",
+      "code": "RAD-014-P",
+      "set": "RAD-NN",
+      "rarity": "Showcase",
+      "type": "Unit",
+      "domains": "Fury",
+      "img": "https://static.dotgg.gg/riftbound/cards/RAD-014-P.webp",
+      "tags": [
+        "promo",
+        "nexus-night"
+      ],
+      "cmId": 917625,
+      "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Radiance-Promos/Shimmering-Swimmer",
+      "source": "Cardmarket + imagen de dotgg.gg"
+    },
+    {
+      "id": "rad-019-p",
+      "name": "Firebrand Raider",
+      "sub": "",
+      "code": "RAD-019-P",
+      "set": "RAD-NN",
+      "rarity": "Showcase",
+      "type": "Unit",
+      "domains": "Fury",
+      "img": "https://static.dotgg.gg/riftbound/cards/RAD-019-P.webp",
+      "tags": [
+        "promo",
+        "nexus-night"
+      ],
+      "cmId": 917626,
+      "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Radiance-Promos/Firebrand-Raider",
+      "source": "Cardmarket + imagen de dotgg.gg"
+    },
+    {
+      "id": "rad-027-p",
+      "name": "Iridescent Avian",
+      "sub": "",
+      "code": "RAD-027-P",
+      "set": "RAD-NN",
+      "rarity": "Showcase",
+      "type": "Unit",
+      "domains": "Calm",
+      "img": "https://static.dotgg.gg/riftbound/cards/RAD-027-P.webp",
+      "tags": [
+        "promo",
+        "nexus-night"
+      ],
+      "cmId": 917627,
+      "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Radiance-Promos/Iridescent-Avian",
+      "source": "Cardmarket + imagen de dotgg.gg"
+    },
+    {
+      "id": "rad-029-p",
+      "name": "Life from Stone",
+      "sub": "",
+      "code": "RAD-029-P",
+      "set": "RAD-NN",
+      "rarity": "Showcase",
+      "type": "Spell",
+      "domains": "Calm",
+      "img": "https://static.dotgg.gg/riftbound/cards/RAD-029-P.webp",
+      "tags": [
+        "promo",
+        "nexus-night"
+      ],
+      "cmId": 917628,
+      "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Radiance-Promos/Life-from-Stone",
+      "source": "Cardmarket + imagen de dotgg.gg"
+    },
+    {
+      "id": "rad-037-p",
+      "name": "Watchful Curator",
+      "sub": "",
+      "code": "RAD-037-P",
+      "set": "RAD-NN",
+      "rarity": "Showcase",
+      "type": "Unit",
+      "domains": "Calm",
+      "img": "https://static.dotgg.gg/riftbound/cards/RAD-037-P.webp",
+      "tags": [
+        "promo",
+        "nexus-night"
+      ],
+      "cmId": 917629,
+      "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Radiance-Promos/Watchful-Curator",
+      "source": "Cardmarket + imagen de dotgg.gg"
+    },
+    {
+      "id": "rad-041-p",
+      "name": "Hush",
+      "sub": "",
+      "code": "RAD-041-P",
+      "set": "RAD-NN",
+      "rarity": "Showcase",
+      "type": "Spell",
+      "domains": "Calm",
+      "img": "https://static.dotgg.gg/riftbound/cards/RAD-041-P.webp",
+      "tags": [
+        "promo",
+        "nexus-night"
+      ],
+      "cmId": 917630,
+      "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Radiance-Promos/Hush",
+      "source": "Cardmarket + imagen de dotgg.gg"
+    },
+    {
+      "id": "rad-048-p",
+      "name": "High Note",
+      "sub": "",
+      "code": "RAD-048-P",
+      "set": "RAD-NN",
+      "rarity": "Showcase",
+      "type": "Spell",
+      "domains": "Mind",
+      "img": "https://static.dotgg.gg/riftbound/cards/RAD-048-P.webp",
+      "tags": [
+        "promo",
+        "nexus-night"
+      ],
+      "cmId": 917631,
+      "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Radiance-Promos/High-Note",
+      "source": "Cardmarket + imagen de dotgg.gg"
+    },
+    {
+      "id": "rad-054-p",
+      "name": "Trinket Peddler",
+      "sub": "",
+      "code": "RAD-054-P",
+      "set": "RAD-NN",
+      "rarity": "Showcase",
+      "type": "Unit",
+      "domains": "Mind",
+      "img": "https://static.dotgg.gg/riftbound/cards/RAD-054-P.webp",
+      "tags": [
+        "promo",
+        "nexus-night"
+      ],
+      "cmId": 917632,
+      "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Radiance-Promos/Trinket-Peddler",
+      "source": "Cardmarket + imagen de dotgg.gg"
+    },
+    {
+      "id": "rad-055-p",
+      "name": "Clanging Sentry",
+      "sub": "",
+      "code": "RAD-055-P",
+      "set": "RAD-NN",
+      "rarity": "Showcase",
+      "type": "Unit",
+      "domains": "Mind",
+      "img": "https://static.dotgg.gg/riftbound/cards/RAD-055-P.webp",
+      "tags": [
+        "promo",
+        "nexus-night"
+      ],
+      "cmId": 917633,
+      "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Radiance-Promos/Clanging-Sentry",
+      "source": "Cardmarket + imagen de dotgg.gg"
+    },
+    {
+      "id": "rad-066-p",
+      "name": "Spirit of the Forge",
+      "sub": "",
+      "code": "RAD-066-P",
+      "set": "RAD-NN",
+      "rarity": "Showcase",
+      "type": "Unit",
+      "domains": "Mind",
+      "img": "https://static.dotgg.gg/riftbound/cards/RAD-066-P.webp",
+      "tags": [
+        "promo",
+        "nexus-night"
+      ],
+      "cmId": 917634,
+      "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Radiance-Promos/Spirit-of-the-Forge",
+      "source": "Cardmarket + imagen de dotgg.gg"
+    },
+    {
+      "id": "rad-070-p",
+      "name": "Hold 'Em",
+      "sub": "",
+      "code": "RAD-070-P",
+      "set": "RAD-NN",
+      "rarity": "Showcase",
+      "type": "Spell",
+      "domains": "Body",
+      "img": "https://static.dotgg.gg/riftbound/cards/RAD-070-P.webp",
+      "tags": [
+        "promo",
+        "nexus-night"
+      ],
+      "cmId": 917635,
+      "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Radiance-Promos/Hold-Em",
+      "source": "Cardmarket + imagen de dotgg.gg"
+    },
+    {
+      "id": "rad-076-p",
+      "name": "Sneaky Zeebles",
+      "sub": "",
+      "code": "RAD-076-P",
+      "set": "RAD-NN",
+      "rarity": "Showcase",
+      "type": "Unit",
+      "domains": "Body",
+      "img": "https://static.dotgg.gg/riftbound/cards/RAD-076-P.webp",
+      "tags": [
+        "promo",
+        "nexus-night"
+      ],
+      "cmId": 917636,
+      "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Radiance-Promos/Sneaky-Zeebles",
+      "source": "Cardmarket + imagen de dotgg.gg"
+    },
+    {
+      "id": "rad-083-p",
+      "name": "Stalwart Goatherd",
+      "sub": "",
+      "code": "RAD-083-P",
+      "set": "RAD-NN",
+      "rarity": "Showcase",
+      "type": "Unit",
+      "domains": "Body",
+      "img": "https://static.dotgg.gg/riftbound/cards/RAD-083-P.webp",
+      "tags": [
+        "promo",
+        "nexus-night"
+      ],
+      "cmId": 917637,
+      "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Radiance-Promos/Stalwart-Goatherd",
+      "source": "Cardmarket + imagen de dotgg.gg"
+    },
+    {
+      "id": "rad-087-p",
+      "name": "Portable Portal",
+      "sub": "",
+      "code": "RAD-087-P",
+      "set": "RAD-NN",
+      "rarity": "Showcase",
+      "type": "Gear",
+      "domains": "Body",
+      "img": "https://static.dotgg.gg/riftbound/cards/RAD-087-P.webp",
+      "tags": [
+        "promo",
+        "nexus-night"
+      ],
+      "cmId": 917638,
+      "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Radiance-Promos/Portable-Portal",
+      "source": "Cardmarket + imagen de dotgg.gg"
+    },
+    {
+      "id": "rad-094-p",
+      "name": "Explosimian",
+      "sub": "",
+      "code": "RAD-094-P",
+      "set": "RAD-NN",
+      "rarity": "Showcase",
+      "type": "Unit",
+      "domains": "Chaos",
+      "img": "https://static.dotgg.gg/riftbound/cards/RAD-094-P.webp",
+      "tags": [
+        "promo",
+        "nexus-night"
+      ],
+      "cmId": 917639,
+      "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Radiance-Promos/Explosimian",
+      "source": "Cardmarket + imagen de dotgg.gg"
+    },
+    {
+      "id": "rad-096-p",
+      "name": "Satchel Charge",
+      "sub": "",
+      "code": "RAD-096-P",
+      "set": "RAD-NN",
+      "rarity": "Showcase",
+      "type": "Spell",
+      "domains": "Chaos",
+      "img": "https://static.dotgg.gg/riftbound/cards/RAD-096-P.webp",
+      "tags": [
+        "promo",
+        "nexus-night"
+      ],
+      "cmId": 917640,
+      "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Radiance-Promos/Satchel-Charge",
+      "source": "Cardmarket + imagen de dotgg.gg"
+    },
+    {
+      "id": "rad-105-p",
+      "name": "Reckless Innovator",
+      "sub": "",
+      "code": "RAD-105-P",
+      "set": "RAD-NN",
+      "rarity": "Showcase",
+      "type": "Unit",
+      "domains": "Chaos",
+      "img": "https://static.dotgg.gg/riftbound/cards/RAD-105-P.webp",
+      "tags": [
+        "promo",
+        "nexus-night"
+      ],
+      "cmId": 917641,
+      "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Radiance-Promos/Reckless-Innovator",
+      "source": "Cardmarket + imagen de dotgg.gg"
+    },
+    {
+      "id": "rad-107-p",
+      "name": "Bedeviling Stranger",
+      "sub": "",
+      "code": "RAD-107-P",
+      "set": "RAD-NN",
+      "rarity": "Showcase",
+      "type": "Unit",
+      "domains": "Chaos",
+      "img": "https://static.dotgg.gg/riftbound/cards/RAD-107-P.webp",
+      "tags": [
+        "promo",
+        "nexus-night"
+      ],
+      "cmId": 917642,
+      "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Radiance-Promos/Bedeviling-Stranger",
+      "source": "Cardmarket + imagen de dotgg.gg"
+    },
+    {
+      "id": "rad-119-p",
+      "name": "Hunting Dog",
+      "sub": "",
+      "code": "RAD-119-P",
+      "set": "RAD-NN",
+      "rarity": "Showcase",
+      "type": "Unit",
+      "domains": "Order",
+      "img": "https://static.dotgg.gg/riftbound/cards/RAD-119-P.webp",
+      "tags": [
+        "promo",
+        "nexus-night"
+      ],
+      "cmId": 917643,
+      "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Radiance-Promos/Hunting-Dog",
+      "source": "Cardmarket + imagen de dotgg.gg"
+    },
+    {
+      "id": "rad-122-p",
+      "name": "Party Crasher",
+      "sub": "",
+      "code": "RAD-122-P",
+      "set": "RAD-NN",
+      "rarity": "Showcase",
+      "type": "Unit",
+      "domains": "Order",
+      "img": "https://static.dotgg.gg/riftbound/cards/RAD-122-P.webp",
+      "tags": [
+        "promo",
+        "nexus-night"
+      ],
+      "cmId": 917644,
+      "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Radiance-Promos/Party-Crasher",
+      "source": "Cardmarket + imagen de dotgg.gg"
+    },
+    {
+      "id": "rad-127-p",
+      "name": "Rousing Display",
+      "sub": "",
+      "code": "RAD-127-P",
+      "set": "RAD-NN",
+      "rarity": "Showcase",
+      "type": "Spell",
+      "domains": "Order",
+      "img": "https://static.dotgg.gg/riftbound/cards/RAD-127-P.webp",
+      "tags": [
+        "promo",
+        "nexus-night"
+      ],
+      "cmId": 917645,
+      "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Radiance-Promos/Rousing-Display",
+      "source": "Cardmarket + imagen de dotgg.gg"
+    },
+    {
+      "id": "rad-130-p",
+      "name": "Battlefield Armorer",
+      "sub": "",
+      "code": "RAD-130-P",
+      "set": "RAD-NN",
+      "rarity": "Showcase",
+      "type": "Unit",
+      "domains": "Order",
+      "img": "https://static.dotgg.gg/riftbound/cards/RAD-130-P.webp",
+      "tags": [
+        "promo",
+        "nexus-night"
+      ],
+      "cmId": 917646,
+      "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Radiance-Promos/Battlefield-Armorer",
+      "source": "Cardmarket + imagen de dotgg.gg"
+    },
+    {
+      "id": "rad-042-promo",
+      "name": "Orianna",
+      "sub": "Exquisite",
+      "code": "RAD-042-PROMO",
+      "set": "RAD",
+      "rarity": "Rare",
+      "type": "Unit",
+      "domains": "Calm",
+      "img": "",
+      "tags": [
+        "promo"
+      ],
+      "cmId": 917811,
+      "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Radiance-Promos/Orianna-Exquisite",
+      "source": "Cardmarket (sin imagen conocida)"
+    },
+    {
+      "id": "rad-021-promo",
+      "name": "Ekko",
+      "sub": "Revolutionary",
+      "code": "RAD-021-PROMO",
+      "set": "RAD",
+      "rarity": "Epic",
+      "type": "Unit",
+      "domains": "Fury",
+      "img": "",
+      "tags": [
+        "promo"
+      ],
+      "cmId": 917812,
+      "cmUrl": "https://www.cardmarket.com/en/Riftbound/Products/Singles/Radiance-Promos/Ekko-Revolutionary",
+      "source": "Cardmarket (sin imagen conocida)"
     }
-  ]
+  ],
+  "sets": {
+    "RAD-NN": "Radiance | Nexus Night"
+  }
 }
